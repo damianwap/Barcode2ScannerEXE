@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HP Scanner Pro — Laptop Dashboard</title>
+<style>
+  :root {
+    --bg-base: #090d16;
+    --bg-surface: #0f172a;
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-card-hover: rgba(51, 65, 85, 0.7);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-highlight: rgba(99, 102, 241, 0.4);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --primary: #6366f1;
+    --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+    --primary-glow: rgba(99, 102, 241, 0.35);
+    --success: #10b981;
+    --success-glow: rgba(16, 185, 129, 0.3);
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-full: 9999px;
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-base);
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.7) 0%, transparent 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 18px var(--primary-glow);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .brand-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .brand-text h1 {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge-pro {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #6366f1, #d946ef);
+    color: #fff;
+    -webkit-text-fill-color: #fff;
+  }
+
+  .brand-text p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 15px;
+    border-radius: var(--radius-full);
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+  }
+
+  .dot {
+    width: 8.5px;
+    height: 8.5px;
+    border-radius: 50%;
+    background: #64748b;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dot.on {
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981, 0 0 18px rgba(16, 185, 129, 0.5);
+    animation: pulseGlow 2s infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.15); }
+  }
+
+  .phone-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: var(--radius-full);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    color: #a5b4fc;
+    transition: all 0.3s ease;
+    max-width: 380px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .phone-pill.online {
+    background: rgba(16, 185, 129, 0.16) !important;
+    border-color: rgba(16, 185, 129, 0.45) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25);
+  }
+
+  /* Main Container */
+  .wrap {
+    max-width: 1300px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 24px 70px;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+    flex: 1;
+  }
+
+  @media (max-width: 980px) {
+    .wrap {
+      grid-template-columns: 1fr;
+      padding: 18px 16px 50px;
+    }
+    header {
+      padding: 14px 18px;
+    }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.45);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s ease;
+  }
+
+  .card:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #f1f5f9;
+  }
+
+  .card-title-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-title-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+  }
+
+  .step-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Security status pill inside Step 1 */
+  .security-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    font-size: 11.5px;
+    color: #6ee7b7;
+    font-weight: 600;
+  }
+
+  .security-indicator svg {
+    width: 15px;
+    height: 15px;
+    stroke: #10b981;
+    fill: none;
+    stroke-width: 2.2;
+    flex-shrink: 0;
+  }
+
+  /* Code Section */
+  .code-container {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: var(--radius-md);
+    padding: 16px 12px;
+    margin: 14px 0;
+    text-align: center;
+    position: relative;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .code-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #fbbf24;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .code {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: 8px;
+    color: #fef08a;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
+    user-select: all;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 54px;
+  }
+
+  .code-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .btn-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-mini:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+  }
+
+  .btn-mini svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  /* QR Box */
+  .qr-wrapper {
+    position: relative;
+    margin: 14px 0;
+  }
+
+  #qrcode {
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #qrcode img, #qrcode canvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  .qr-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .qr-placeholder svg {
+    width: 44px;
+    height: 44px;
+    stroke: #94a3b8;
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  /* Reticle corners for QR box */
+  .corner-reticle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: #6366f1;
+    border-style: solid;
+    pointer-events: none;
+  }
+  .cr-tl { top: -2px; left: -2px; border-width: 2.5px 0 0 2.5px; border-top-left-radius: 6px; }
+  .cr-tr { top: -2px; right: -2px; border-width: 2.5px 2.5px 0 0; border-top-right-radius: 6px; }
+  .cr-bl { bottom: -2px; left: -2px; border-width: 0 0 2.5px 2.5px; border-bottom-left-radius: 6px; }
+  .cr-br { bottom: -2px; right: -2px; border-width: 0 2.5px 2.5px 0; border-bottom-right-radius: 6px; }
+
+  /* Link Display Box */
+  .link-box {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px dashed rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: #93c5fd;
+  }
+
+  .link-text {
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 11px;
+  }
+
+  /* Buttons */
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-primary {
+    background: var(--primary-gradient);
+    color: #ffffff;
+    font-size: 14.5px;
+    font-weight: 700;
+    padding: 13px 20px;
+    border-radius: var(--radius-md);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    box-shadow: 0 4px 18px var(--primary-glow);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+    transform: translateY(-1.5px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0.5px) scale(0.99);
+  }
+
+  .btn-primary svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+  }
+
+  .btn-secondary {
+    background: rgba(51, 65, 85, 0.7);
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(71, 85, 105, 0.85);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  .btn-secondary svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.24);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+
+  .btn-danger svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  /* Custom Modern Switches */
+  .switch-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .switch-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #cbd5e1;
+    font-weight: 500;
+    padding: 6px 4px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+  }
+
+  .switch-item:hover {
+    color: #ffffff;
+  }
+
+  .switch-item-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .switch-item-left svg {
+    width: 16px;
+    height: 16px;
+    stroke: #94a3b8;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+
+  .custom-switch {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .custom-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #334155;
+    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 24px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  input:checked + .slider {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(16px);
+  }
+
+  /* Info Note / Hint */
+  .hint-box {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    margin-top: 16px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .hint-box strong {
+    color: #e2e8f0;
+  }
+
+  /* Auto-Type Control Card */
+  .badge-status-auto {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .badge-status-auto.off {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    border-color: rgba(100, 116, 139, 0.3);
+  }
+
+  .auto-type-options {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .auto-opt-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .opt-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+
+  .custom-select {
+    background: #0f172a;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #f1f5f9;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .custom-select:focus {
+    border-color: #34d399;
+    box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.2);
+  }
+
+  .auto-type-guide {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-top: 14px;
+  }
+
+  .auto-type-guide strong {
+    color: #38bdf8;
+  }
+
+  /* Stats Bar */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 600px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .stat-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.purple { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+  .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+  .stat-icon.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+  .stat-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .stat-info .stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-info .stat-lbl {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* Focus Input Field */
+  .focus-field-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .focus-field-wrap svg.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    stroke: #818cf8;
+    fill: none;
+    stroke-width: 2;
+    pointer-events: none;
+  }
+
+  #focusInput {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    border: 2px solid rgba(99, 102, 241, 0.4);
+    color: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 14px 16px 14px 48px;
+    font-size: 15px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+
+  #focusInput:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2), 0 6px 20px rgba(0,0,0,0.3);
+  }
+
+  #focusInput::placeholder {
+    color: #64748b;
+    font-weight: 400;
+    font-size: 14px;
+  }
+
+  /* Latest Scan Banner */
+  .latest {
+    background: linear-gradient(135deg, rgba(6, 78, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border: 1.5px solid rgba(16, 185, 129, 0.45);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    display: none;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+  }
+
+  .latest.show {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    animation: popSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes popSlide {
+    from { transform: translateY(-8px) scale(0.98); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .latest-info {
+    overflow: hidden;
+  }
+
+  .latest-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #34d399;
+    margin-bottom: 4px;
+  }
+
+  .latest-badge span.pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+  }
+
+  .latest .v {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    word-break: break-all;
+    color: #ecfdf5;
+    font-family: 'Consolas', 'Menlo', monospace;
+  }
+
+  .latest .m {
+    font-size: 12px;
+    color: #a7f3d0;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Table Controls */
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .count {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 260px;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    stroke: #64748b;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .search-input {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    color: #f1f5f9;
+    border-radius: var(--radius-sm);
+    padding: 7px 10px 7px 32px;
+    font-size: 12.5px;
+    outline: none;
+    transition: border 0.2s ease;
+  }
+
+  .search-input:focus {
+    border-color: #818cf8;
+  }
+
+  /* Table */
+  .tblwrap {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: rgba(15, 23, 42, 0.4);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Scrollbar */
+  .tblwrap::-webkit-scrollbar { width: 6px; }
+  .tblwrap::-webkit-scrollbar-track { background: transparent; }
+  .tblwrap::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  .tblwrap::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: #131d31;
+    z-index: 10;
+  }
+
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+    vertical-align: middle;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: rgba(30, 41, 59, 0.6);
+  }
+
+  .td-code {
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-weight: 700;
+    color: #ffffff;
+    word-break: break-all;
+    font-size: 13.5px;
+  }
+
+  .badge-fmt {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+  }
+
+  /* Phone device badge inside table */
+  .badge-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(99, 102, 241, 0.14);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #c7d2fe;
+    white-space: nowrap;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .badge-phone svg {
+    width: 11px;
+    height: 11px;
+    stroke: #818cf8;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+
+  .table-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .empty-state {
+    padding: 46px 20px;
+    text-align: center;
+    color: #64748b;
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+    stroke: #475569;
+    fill: none;
+    stroke-width: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+
+  /* Instruction Guide */
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .guide-step {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+  }
+
+  .guide-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .guide-step h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+
+  .guide-step p {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(15, 23, 42, 0.92);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #ecfdf5;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 16px rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast svg {
+    width: 18px;
+    height: 18px;
+    stroke: #10b981;
+    fill: none;
+    stroke-width: 2.5;
+  }
+
+  /* Security Modal Approval Dialog */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-backdrop.show {
+    display: flex;
+  }
+
+  .modal-card {
+    background: #0f172a;
+    border: 1.5px solid rgba(245, 158, 11, 0.45);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.25);
+    border-radius: 20px;
+    max-width: 480px;
+    width: 100%;
+    padding: 26px;
+    color: #f8fafc;
+    animation: popSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .modal-icon-shield {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .modal-icon-shield svg {
+    width: 26px;
+    height: 26px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+  }
+
+  .modal-header h3 {
+    font-size: 17px;
+    font-weight: 800;
+    color: #ffffff;
+  }
+
+  .modal-header p {
+    font-size: 12.5px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  .modal-device-box {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .modal-device-box svg {
+    width: 30px;
+    height: 30px;
+    stroke: #818cf8;
+    fill: none;
+    stroke-width: 1.8;
+  }
+
+  .device-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .device-status {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  .modal-warning {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #fef08a;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .modal-btn-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn-approve {
+    flex: 1.2;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 13px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  }
+
+  .btn-approve:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5);
+  }
+
+  .btn-reject {
+    flex: 1;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 13px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-reject:hover {
+    background: rgba(239, 68, 68, 0.28);
+    color: #ffffff;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="12" y1="7" x2="12" y2="17"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>HP SCANNER <span class="badge-pro">PRO</span></h1>
+      <p>Barcode & QR Live Sync ke Laptop (Protected & Cloud-Ready)</p>
+    </div>
+  </a>
+
+  <div class="header-actions">
+    <div class="phone-pill" id="phoneStatus">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      <span id="phoneTxt">HP belum tersambung</span>
+    </div>
+    <div class="status-pill">
+      <span class="dot" id="dot"></span>
+      <span id="statusTxt">Menghubungkan server...</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Left Column: Session & Pairing -->
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-title-icon">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <span>Koneksi HP</span>
+        </div>
+        <span class="step-badge">Langkah 1</span>
+      </div>
+
+      <!-- Security Active Indicator -->
+      <div class="security-indicator">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Proteksi Aktif: HostKey & QR Secret Terverifikasi</span>
+      </div>
+
+      <button class="btn-primary" id="btnCreate">
+        <svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/></svg>
+        <span>Buat Kode Sesi Baru</span>
+      </button>
+
+      <div class="code-container">
+        <div class="code-label">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          KODE 6 DIGIT
+        </div>
+        <div class="code" id="code">------</div>
+        <div class="code-actions">
+          <button class="btn-mini" id="btnCopyCode" title="Salin kode ke clipboard">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Salin Kode
+          </button>
+        </div>
+      </div>
+
+      <div class="qr-wrapper">
+        <div class="corner-reticle cr-tl"></div>
+        <div class="corner-reticle cr-tr"></div>
+        <div class="corner-reticle cr-bl"></div>
+        <div class="corner-reticle cr-br"></div>
+        <div id="qrcode">
+          <div class="qr-placeholder">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Klik "Buat Kode Sesi Baru" untuk memunculkan QR Code pairing HP</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="link-box" id="linkWrap" style="display:none">
+        <div class="link-text" id="linkTxt"></div>
+        <button class="btn-mini" id="btnOpenTab" style="flex-shrink:0" title="Buka di tab browser baru">
+          Buka Tab
+        </button>
+      </div>
+
+      <!-- Switches -->
+      <div class="switch-group">
+        <label class="switch-item">
+          <div class="switch-item-left">
+            <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <span>Bunyi synth saat hasil masuk</span>
+          </div>
+          <div class="custom-switch">
+            <input type="checkbox" id="optBeep" checked>
+            <span class="slider"></span>
+          </div>
+        </label>
+
+        <label class="switch-item">
+          <div class="switch-item-left">
+            <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            <span>Otomatis salin ke Clipboard</span>
+          </div>
+          <div class="custom-switch">
+            <input type="checkbox" id="optCopy" checked>
+            <span class="slider"></span>
+          </div>
+        </label>
+
+        <label class="switch-item">
+          <div class="switch-item-left">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            <span>Tolak scan ganda berurutan</span>
+          </div>
+          <div class="custom-switch">
+            <input type="checkbox" id="optDedup">
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+
+      <div class="hint-box">
+        🔒 <strong>Aman di Hosting Publik:</strong> Scan QR code menghubungkan HP secara otomatis via kunci token aman. Jika ada perangkat asing yang mencoba menebak kode 6 digit secara manual, laptop akan meminta persetujuan Anda terlebih dahulu.
+      </div>
+    </div>
+
+    <!-- Card: Auto-Type ke Aplikasi Windows (Excel, Kasir, Word, Notepad) -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-title-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+          </div>
+          <span>Ketik ke Aplikasi Lain</span>
+        </div>
+        <span class="badge-status-auto" id="autoTypeBadge">🟢 AKTIF</span>
+      </div>
+
+      <div class="switch-group" style="border: none; padding-top: 0; margin-top: 0;">
+        <label class="switch-item">
+          <div class="switch-item-left">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span><strong>Ketik otomatis ke aplikasi aktif</strong></span>
+          </div>
+          <div class="custom-switch">
+            <input type="checkbox" id="optAutoType" checked>
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+
+      <div class="auto-type-options" id="autoTypeOptions">
+        <div class="auto-opt-row">
+          <span class="opt-label">Tombol Akhir:</span>
+          <select id="selSuffix" class="custom-select">
+            <option value="enter" selected>ENTER (Pindah Baris / Bawah)</option>
+            <option value="tab">TAB (Pindah Kolom / Kanan)</option>
+            <option value="none">Tanpa Tombol (Hanya Teks)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="auto-type-guide">
+        💡 <strong>Cara Kerja:</strong> Buka & klik <strong>Excel, Word, Notepad, atau Software Kasir</strong> Anda. Saat HP melakukan scan, hasil barcode <strong>langsung terketik otomatis</strong> ke aplikasi yang sedang aktif tersebut layaknya scanner barcode fisik!
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Live Feed & Table -->
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-title-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span>Hasil Scan Live</span>
+        </div>
+        <span class="step-badge">Langkah 2</span>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-val" id="statCount">0</div>
+            <div class="stat-lbl">Total Barcode Terscan</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-val" id="statTime">-</div>
+            <div class="stat-lbl">Waktu Scan Terakhir</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon amber">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-val" id="statFormat">-</div>
+            <div class="stat-lbl">Format Terakhir</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Focus Input with Icon -->
+      <div class="focus-field-wrap">
+        <svg class="input-icon" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+        <input id="focusInput" placeholder="Klik kolom ini agar hasil scan otomatis terketik + Enter..." autocomplete="off">
+      </div>
+
+      <!-- Latest Scan Hero Box -->
+      <div class="latest" id="latest">
+        <div class="latest-info">
+          <div class="latest-badge">
+            <span class="pulse"></span>
+            Scan Masuk Terbaru
+          </div>
+          <div class="v" id="latestVal">------</div>
+          <div class="m" id="latestMeta">Menunggu data...</div>
+        </div>
+        <button class="btn-secondary" id="btnCopyLatest" style="flex-shrink:0" title="Salin hasil scan terbaru">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Salin
+        </button>
+      </div>
+
+      <!-- Table Toolbar -->
+      <div class="table-toolbar">
+        <div class="count" id="count">0 hasil tersimpan</div>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="search-input" id="tableFilter" placeholder="Cari barcode / jenis HP...">
+        </div>
+      </div>
+
+      <!-- Table with Device Column -->
+      <div class="tblwrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 45px;">#</th>
+              <th style="width: 90px;">Waktu</th>
+              <th style="width: 150px;">Perangkat</th>
+              <th>Isi Barcode / Teks</th>
+              <th style="width: 120px;">Format</th>
+              <th style="width: 75px; text-align: right;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                  <p>Belum ada barcode terscan.<br>Hubungkan HP dan mulai scan untuk melihat data di sini.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Action Buttons -->
+      <div class="table-actions">
+        <button class="btn-secondary" id="btnCSV">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export ke CSV</span>
+        </button>
+        <button class="btn-secondary" id="btnCopyAll">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Salin Semua Baris</span>
+        </button>
+        <button class="btn-danger" id="btnClear" style="margin-left: auto;">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Hapus Riwayat</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Guide Card -->
+    <div class="card">
+      <div class="card-header" style="margin-bottom: 8px;">
+        <div class="card-title">
+          <div class="card-title-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <span>Panduan Penggunaan Cloud / Publik</span>
+        </div>
+      </div>
+
+      <div class="guide-grid">
+        <div class="guide-step">
+          <div class="guide-step-num">1</div>
+          <h3>Multi-Perangkat HP</h3>
+          <p>Mendukung banyak HP sekaligus. Jenis HP terdeteksi otomatis (Samsung, iPhone, Xiaomi, dll.).</p>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">2</div>
+          <h3>Scan QR Code</h3>
+          <p>Scan QR langsung di layar laptop — terhubung instan via kunci token terenkripsi.</p>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">3</div>
+          <h3>Proteksi Anti-Tebak</h3>
+          <p>Jika ada yang mengetik PIN secara manual, laptop akan meminta izin Anda terlebih dahulu.</p>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">4</div>
+          <h3>Auto-Typing Kasir</h3>
+          <p>Data tersinkron otomatis ke kolom fokus laptop atau via script <code>2-KETIK-OTOMATIS.bat</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Approval Dialog -->
+<div class="modal-backdrop" id="approvalModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-icon-shield">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <h3>Permintaan Izin Perangkat</h3>
+        <p>Ada perangkat yang mencoba menghubungkan diri secara manual</p>
+      </div>
+    </div>
+    
+    <div class="modal-device-box">
+      <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      <div>
+        <div class="device-name" id="reqDeviceName">Perangkat HP</div>
+        <div class="device-status">Memasukkan kode 6 digit secara manual dari internet</div>
+      </div>
+    </div>
+
+    <div class="modal-warning">
+      ⚠️ <strong>Penting:</strong> Apakah ini HP Anda? Jika ini HP Anda sendiri, klik <strong>Izinkan</strong>. Jika bukan, segera klik <strong>Tolak</strong> agar perangkat tersebut tidak bisa mengirim data.
+    </div>
+
+    <div class="modal-btn-row">
+      <button class="btn-approve" id="btnModalApprove">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Ya, Izinkan HP Ini</span>
+      </button>
+      <button class="btn-reject" id="btnModalReject">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span>Tolak</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastMsg">Tindakan berhasil!</span>
+</div>
+
+<script src="/vendor/qrcode.min.js"></script>
+<script src="/index.js"></script>
+</body>
+</html>

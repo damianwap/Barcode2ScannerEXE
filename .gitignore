@@ -1,0 +1,18 @@
+# Visual Studio & Build Output
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Sensitive certificates & private keys
+*.pfx
+*.p12
+*.key
+*.pem
+*.cer
+*.crt
+SECURITY_AUDIT.md
+!vendor/*.js

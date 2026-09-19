@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>HP Scanner Pro — Mobile</title>
+<style>
+  :root {
+    --bg-base: #1a1a2e;
+    --bg-card: #16213e;
+    --border: #2a2a4a;
+    --text-primary: #e0e0e0;
+    --text-secondary: #8888a0;
+    --text-muted: #5a5a72;
+    --primary: #4a6cf7;
+    --success: #2ecc71;
+    --warning: #e6a817;
+    --danger: #e74c3c;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom, 30px);
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    background: #111128;
+    border-bottom: 1px solid var(--border);
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .brand h1 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .brand span.tag {
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--primary);
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    margin-left: 4px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: #222244;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--danger);
+    transition: all 0.2s ease;
+  }
+
+  .status-pill.on {
+    background: #1a3a2a;
+    border-color: #2a5a3a;
+    color: var(--success);
+  }
+
+  .status-pill.on .status-dot {
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  .status-pill.waiting {
+    background: #3a3020;
+    border-color: #5a4a20;
+    color: var(--warning);
+  }
+
+  .status-pill.waiting .status-dot {
+    background: var(--warning);
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.6; }
+  }
+
+  /* Flash Screen Overlay */
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: rgba(46, 204, 113, 0.3);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 99;
+  }
+
+  .flash.go {
+    animation: flashAnim 0.3s ease-out;
+  }
+
+  @keyframes flashAnim {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
+  }
+
+  /* Main Container */
+  .wrap {
+    padding: 12px 14px;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #d0d0e0;
+  }
+
+  .card-title svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+    stroke-width: 2;
+  }
+
+  /* Code Section */
+  .code-input-box {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  #code {
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border);
+    background: #111128;
+    color: var(--warning);
+    font-size: 24px;
+    text-align: center;
+    letter-spacing: 8px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    font-family: 'Consolas', 'Menlo', monospace;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  #code:focus {
+    border-color: var(--primary);
+  }
+
+  #code::placeholder {
+    color: #3a3a55;
+    letter-spacing: 8px;
+  }
+
+  /* Locked Device Type Badge */
+  .device-field-wrap {
+    margin-bottom: 14px;
+    background: #111128;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+  }
+
+  .device-field-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .device-field-label span.detect-hint {
+    font-size: 10px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  .device-info-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0e0e22;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  .device-info-badge svg.icon-dev {
+    width: 17px;
+    height: 17px;
+    stroke: var(--text-secondary);
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+
+  /* Connected Session Banner (Collapsed) */
+  .session-connected-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background: #1a3a2a;
+    border: 1px solid #2a5a3a;
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+  }
+
+  .session-connected-bar.active {
+    display: flex;
+  }
+
+  .scb-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .scb-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #c0e8d0;
+  }
+
+  .scb-code {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--warning);
+    letter-spacing: 2px;
+  }
+
+  .scb-device {
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .scb-btn {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 11px;
+    border-radius: var(--radius-full);
+    background: #2a2a4a;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  /* Buttons */
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    border-radius: var(--radius-md);
+    transition: opacity 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  button:active {
+    opacity: 0.8;
+  }
+
+  button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    background: var(--primary);
+    color: #ffffff;
+  }
+
+  .btn-start-cam {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    background: var(--success);
+    color: #ffffff;
+    margin-top: 12px;
+  }
+
+  .btn-start-cam.stop {
+    background: var(--danger);
+    color: #ffffff;
+  }
+
+  .btn-ctrl {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: #222244;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ctrl.on {
+    background: #3a3020;
+    border-color: #5a4a20;
+    color: var(--warning);
+  }
+
+  /* Viewfinder Area */
+  .viewfinder-wrap {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: #000000;
+    min-height: 260px;
+    border: 1px solid var(--border);
+  }
+
+  #reader {
+    width: 100% !important;
+    border: none !important;
+  }
+
+  #reader video {
+    width: 100% !important;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+  }
+
+  /* Laser Scan Animation */
+  .laser-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--danger);
+    opacity: 0.9;
+    display: none;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .laser-line.active {
+    display: block;
+    animation: scanLaser 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes scanLaser {
+    0% { top: 10%; }
+    100% { top: 90%; }
+  }
+
+  /* Viewfinder corner brackets */
+  .vf-corners {
+    position: absolute;
+    inset: 16px;
+    pointer-events: none;
+    z-index: 9;
+    border-radius: 8px;
+  }
+
+  .vf-c {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: #ffffff;
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .vf-tl { top: 0; left: 0; border-width: 2px 0 0 2px; border-top-left-radius: 6px; }
+  .vf-tr { top: 0; right: 0; border-width: 2px 2px 0 0; border-top-right-radius: 6px; }
+  .vf-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; border-bottom-left-radius: 6px; }
+  .vf-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-bottom-right-radius: 6px; }
+
+  .vf-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+    gap: 10px;
+  }
+
+  .vf-placeholder svg {
+    width: 40px;
+    height: 40px;
+    stroke: var(--text-muted);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .vf-placeholder p {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Camera Controls Row */
+  .cam-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  /* Success Banner / Toast */
+  .ok-banner {
+    min-height: 24px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--success);
+    text-align: center;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+
+  /* Error Box */
+  #errbox {
+    display: none;
+    background: #2a1515;
+    border: 1px solid #4a2020;
+    color: #f0a0a0;
+    font-size: 12px;
+    border-radius: var(--radius-md);
+    padding: 12px;
+    margin-top: 12px;
+    line-height: 1.6;
+  }
+
+  /* Continuous Scan Toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 8px 4px 0;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .toggle-row-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .custom-switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .custom-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #333355;
+    transition: 0.2s ease;
+    border-radius: 20px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: 0.2s ease;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider {
+    background: var(--success);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(16px);
+  }
+
+  /* Manual Entry */
+  .manual-wrap {
+    display: flex;
+    gap: 8px;
+  }
+
+  #manual {
+    flex: 1;
+    background: #111128;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 11px 14px;
+    color: #ffffff;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  #manual:focus {
+    border-color: var(--primary);
+  }
+
+  #btnSend {
+    padding: 11px 16px;
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  /* History list */
+  .hist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .hist-cnt-badge {
+    font-size: 11px;
+    font-weight: 700;
+    background: #1a3a2a;
+    color: var(--success);
+    border: 1px solid #2a5a3a;
+    padding: 3px 9px;
+    border-radius: var(--radius-full);
+  }
+
+  .hist {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .hist div {
+    background: #111128;
+    border: 1px solid var(--border);
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    animation: fadeIn 0.15s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hist .code-txt {
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+
+  .hist small {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--success);
+    white-space: nowrap;
+  }
+
+  .hist-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 16px 8px;
+  }
+
+  .hint-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  /* Scanner Pairing QR Code */
+  .btn-scan-qr {
+    width: 100%;
+    padding: 13px 16px;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    font-size: 14.5px;
+    font-weight: 700;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .btn-scan-qr:hover {
+    background: var(--primary-hover);
+  }
+  .btn-scan-qr:active {
+    background: var(--primary-hover);
+    transform: translateY(1px);
+  }
+  .qr-scan-subhint {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 12px;
+  }
+  .divider-or {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 14px 0 12px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .divider-or::before, .divider-or::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px dashed var(--border);
+  }
+  .divider-or span {
+    padding: 0 10px;
+  }
+  .pair-viewfinder-wrap {
+    background: #101026;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-bottom: 14px;
+    animation: fadeIn 0.25s ease;
+  }
+  .pair-viewfinder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+  .btn-close-pair {
+    background: #2a2a4a;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .pair-scanner-box {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+    background: #000;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .pair-scanner-box #pairReader {
+    width: 100% !important;
+  }
+  .pair-scanner-box #pairReader video {
+    border-radius: var(--radius-sm);
+    width: 100% !important;
+    object-fit: cover;
+  }
+  .pair-laser {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: var(--success);
+    animation: scanAnim 1.8s infinite ease-in-out;
+    pointer-events: none;
+  }
+  @keyframes scanAnim {
+    0%, 100% { top: 15%; }
+    50% { top: 85%; }
+  }
+  .pair-tip {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 6px;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="12" y1="7" x2="12" y2="17"/></svg>
+      </div>
+      <div>
+        <h1>HP SCANNER <span class="tag">HP</span></h1>
+      </div>
+    </div>
+
+    <div class="status-pill" id="statusPill">
+      <span class="status-dot"></span>
+      <span id="status">Belum terhubung</span>
+    </div>
+  </div>
+</header>
+
+<div class="flash" id="flash"></div>
+
+<div class="wrap">
+  <!-- Step 1: Session Connection -->
+  <div class="card" id="sessionCard">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Sambungkan ke Laptop</span>
+      </div>
+    </div>
+
+    <!-- Tombol Scan QR dari Aplikasi EXE Laptop -->
+    <button type="button" class="btn-scan-qr" id="btnScanQrExe">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <line x1="7" y1="17" x2="7" y2="17.01" stroke-width="2.5"/>
+        <line x1="17" y1="7" x2="17" y2="7.01" stroke-width="2.5"/>
+        <line x1="7" y1="7" x2="7" y2="7.01" stroke-width="2.5"/>
+        <line x1="17" y1="17" x2="17" y2="17.01" stroke-width="2.5"/>
+      </svg>
+      <span>Scan QR Code Layar Laptop</span>
+    </button>
+    <div class="qr-scan-subhint" id="qrSubhint">
+      Arahkan kamera ke QR Code aplikasi Barcode2Scanner di laptop
+    </div>
+
+    <!-- Viewfinder Khusus Scan QR Pairing (Hidden by default) -->
+    <div class="pair-viewfinder-wrap" id="pairViewfinder" style="display: none;">
+      <div class="pair-viewfinder-header">
+        <span>📷 Arahkan Kamera ke QR Code Laptop:</span>
+        <button type="button" class="btn-close-pair" id="btnClosePair">✕ Tutup</button>
+      </div>
+      <div class="pair-scanner-box">
+        <div id="pairReader"></div>
+        <div class="pair-laser"></div>
+      </div>
+      <div class="pair-tip">Posisikan QR Code di dalam kotak</div>
+    </div>
+
+    <div class="divider-or">
+      <span>ATAU MASUKKAN MANUAL</span>
+    </div>
+
+    <div class="code-input-box">
+      <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="------" autocomplete="off">
+    </div>
+
+    <!-- Locked Readonly Device Type Badge -->
+    <div class="device-field-wrap">
+      <div class="device-field-label">
+        <span>Jenis Perangkat:</span>
+        <span class="detect-hint">🔒 Terdeteksi Otomatis</span>
+      </div>
+      <div class="device-info-badge">
+        <svg class="icon-dev" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <span id="deviceDisplayName">Mendeteksi perangkat...</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnConn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      <span>Hubungkan ke Laptop</span>
+    </button>
+    
+    <div class="hint-sub" id="hintAuth">
+      💡 Masukkan kode 6 digit atau scan QR dari layar laptop.
+    </div>
+  </div>
+
+  <!-- Collapsed Connected Session Bar -->
+  <div class="session-connected-bar" id="sessionActiveBar">
+    <div class="scb-left">
+      <div class="scb-top">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Sesi:</span>
+        <span class="scb-code" id="activeCodeDisplay">------</span>
+      </div>
+      <div class="scb-device">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <span id="activeDeviceDisplay">Smartphone</span>
+      </div>
+    </div>
+    <button class="scb-btn" id="btnChangeSession">Ganti Sesi</button>
+  </div>
+
+  <!-- Step 2: Camera Scanner -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Kamera Scanner</span>
+      </div>
+    </div>
+
+    <!-- Viewfinder -->
+    <div class="viewfinder-wrap">
+      <div class="laser-line" id="laserLine"></div>
+      <div class="vf-corners">
+        <div class="vf-c vf-tl"></div>
+        <div class="vf-c vf-tr"></div>
+        <div class="vf-c vf-bl"></div>
+        <div class="vf-c vf-br"></div>
+      </div>
+      <div id="reader"></div>
+      <div class="vf-placeholder" id="vfPlaceholder">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <p>Hubungkan ke laptop lalu klik<br><strong>"Nyalakan Kamera"</strong></p>
+      </div>
+    </div>
+
+    <!-- Camera Activation Button -->
+    <button class="btn-start-cam" id="btnCam" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span id="camBtnText">Nyalakan Kamera</span>
+    </button>
+
+    <!-- Camera Controls -->
+    <div class="cam-controls">
+      <button class="btn-ctrl" id="btnTorch" disabled>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span id="torchTxt">Senter / Flash</span>
+      </button>
+      <button class="btn-ctrl" id="btnSwitch" disabled>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <span>Ganti Kamera</span>
+      </button>
+    </div>
+
+    <div class="ok-banner" id="ok"></div>
+
+    <div id="errbox"></div>
+
+    <!-- Continuous scan option -->
+    <label class="toggle-row" for="optCont">
+      <div class="toggle-row-left">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <span>Scan beruntun otomatis (tanpa henti)</span>
+      </div>
+      <div class="custom-switch">
+        <input type="checkbox" id="optCont" checked>
+        <span class="slider"></span>
+      </div>
+    </label>
+  </div>
+
+  <!-- Step 3: Manual Entry -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
+        <span>Ketik Manual (Barcode Rusak)</span>
+      </div>
+    </div>
+
+    <div class="manual-wrap">
+      <input id="manual" placeholder="Ketik kode barcode...">
+      <button id="btnSend" disabled>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span>Kirim</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 4: History -->
+  <div class="card">
+    <div class="hist-header">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Terkirim ke Laptop</span>
+      </div>
+      <div class="hist-cnt-badge">
+        <span id="cnt">0</span> tersinkron
+      </div>
+    </div>
+
+    <div class="hist" id="hist">
+      <div class="hist-empty" id="histEmpty">Belum ada barcode yang dikirim</div>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor/html5-qrcode.min.js"></script>
+<script src="/scan.js"></script>
+</body>
+</html>
