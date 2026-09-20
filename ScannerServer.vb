@@ -25,7 +25,7 @@ Public Class ScannerServer
     Private _sessionGeneration As Integer = 0
     Private _sessionCreatedAtUtc As DateTime = DateTime.UtcNow
     Private Const SessionMaxAgeHours As Integer = 24
-    Private Const MaxScanTextLength As Integer = 512
+    Private Const MaxScanTextLength As Integer = 8192
     Private _cleanupTimer As System.Threading.Timer = Nothing
     Private Const MaxConcurrentConnections As Integer = 30
     Private Const MaxConnectionsPerIP As Integer = 5
@@ -148,20 +148,17 @@ Public Class ScannerServer
     End Property
 
     ''' <summary>
-    ''' Validasi server-side untuk payload scan sebelum diteruskan ke Auto-Type.
-    ''' Menolak teks kosong, terlalu panjang, atau berisi karakter di luar allowlist barcode.
+    ''' Menerima string scan apa adanya seperti Barcode to PC.
+    ''' Mempertahankan seluruh karakter (tanda petik, kurung kurawal, backslash, xml/json, simbol,
+    ''' spasi, tab, multiline, dan karakter unicode), hanya membuang karakter null (\0) dan membatasi ukuran memori.
     ''' </summary>
     Public Shared Function SanitizeScanText(raw As String) As String
         If String.IsNullOrEmpty(raw) Then Return ""
-        Const AllowedSymbols As String = " -._~:/?#[]@!$&'()*+,;=%"
-        Dim sb As New StringBuilder(Math.Min(raw.Length, MaxScanTextLength))
-        For Each c In raw
-            If Char.IsLetterOrDigit(c) OrElse AllowedSymbols.IndexOf(c) >= 0 Then
-                sb.Append(c)
-                If sb.Length >= MaxScanTextLength Then Exit For
-            End If
-        Next
-        Return sb.ToString()
+        Dim cleaned = raw.Replace(ChrW(0), "")
+        If cleaned.Length > MaxScanTextLength Then
+            cleaned = cleaned.Substring(0, MaxScanTextLength)
+        End If
+        Return cleaned
     End Function
 
     Private Sub SweepRateLimits(state As Object)

@@ -26,6 +26,11 @@ Public Class Form1
     Private _qrRevealed As Boolean = False
     Private _qrHideTimer As Windows.Forms.Timer = Nothing
 
+    Private _trayIcon As NotifyIcon = Nothing
+    Private _trayMenu As ContextMenuStrip = Nothing
+    Private _allowClose As Boolean = False
+    Private _trayBalloonShown As Boolean = False
+
     ' Real-time output: file CSV/XML yang ditulis otomatis tiap scan masuk.
     ' - CSV: append per baris (selalu valid). Kalau file sedang dibuka/dikunci Excel,
     '   baris ditampung di _rtPending dan ditulis saat file bebas (tidak auto-mati).
@@ -50,6 +55,7 @@ Public Class Form1
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.KeyPreview = True
         cmbSuffix.SelectedIndex = 0
+        SetupTrayIcon()
 
         Try
             Dim icoPath = Path.Combine(Application.StartupPath, "app.ico")
@@ -58,6 +64,10 @@ Public Class Form1
             End If
             If File.Exists(icoPath) Then
                 Me.Icon = New Icon(icoPath)
+                Try
+                    If _trayIcon IsNot Nothing Then _trayIcon.Icon = Me.Icon
+                Catch
+                End Try
             End If
         Catch
         End Try
@@ -120,6 +130,23 @@ Public Class Form1
     End Sub
 
     Private Sub Form1_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        If Not _allowClose AndAlso e.CloseReason = Windows.Forms.CloseReason.UserClosing Then
+            e.Cancel = True
+            MinimizeToTray()
+            Return
+        End If
+        Try
+            If _trayIcon IsNot Nothing Then
+                _trayIcon.Visible = False
+                _trayIcon.Dispose()
+                _trayIcon = Nothing
+            End If
+            If _trayMenu IsNot Nothing Then
+                _trayMenu.Dispose()
+                _trayMenu = Nothing
+            End If
+        Catch
+        End Try
         Try
             _server?.StopServer()
         Catch
@@ -128,6 +155,100 @@ Public Class Form1
             If _qrHideTimer IsNot Nothing Then _qrHideTimer.Dispose()
         Catch
         End Try
+    End Sub
+
+    Private Sub Form1_Resize(sender As Object, e As EventArgs) Handles MyBase.Resize
+        If Me.WindowState = FormWindowState.Minimized Then
+            MinimizeToTray()
+        End If
+    End Sub
+
+    Private Sub SetupTrayIcon()
+        Try
+            If _trayIcon IsNot Nothing Then Return
+            _trayMenu = New ContextMenuStrip()
+            _trayMenu.Items.Add("Buka ScanKilat", Nothing, AddressOf TrayOpen_Click)
+            _trayMenu.Items.Add(New ToolStripSeparator())
+            _trayMenu.Items.Add("Keluar", Nothing, AddressOf TrayExit_Click)
+            _trayIcon = New NotifyIcon()
+            _trayIcon.Text = "ScanKilat Pro — server scanner aktif"
+            _trayIcon.ContextMenuStrip = _trayMenu
+            Try
+                If Me.Icon IsNot Nothing Then
+                    _trayIcon.Icon = CType(Me.Icon.Clone(), Icon)
+                Else
+                    Dim icoPath = Path.Combine(Application.StartupPath, "app.ico")
+                    If File.Exists(icoPath) Then
+                        _trayIcon.Icon = New Icon(icoPath)
+                    Else
+                        _trayIcon.Icon = System.Drawing.SystemIcons.Application
+                    End If
+                End If
+            Catch
+                _trayIcon.Icon = System.Drawing.SystemIcons.Application
+            End Try
+            AddHandler _trayIcon.DoubleClick, AddressOf TrayOpen_Click
+            _trayIcon.Visible = True
+            UpdateTrayText()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub MinimizeToTray()
+        Try
+            Me.Hide()
+            Me.ShowInTaskbar = False
+            If _trayIcon IsNot Nothing Then
+                _trayIcon.Visible = True
+                UpdateTrayText()
+                If Not _trayBalloonShown Then
+                    _trayBalloonShown = True
+                    _trayIcon.ShowBalloonTip(3000, "ScanKilat tetap berjalan",
+                        "Aplikasi diminimize ke system tray. Server scanner & auto-type tetap aktif. Klik 2x ikon tray untuk membuka lagi.",
+                        ToolTipIcon.Info)
+                End If
+            End If
+        Catch
+        End Try
+    End Sub
+
+    Private Sub ShowFromTray()
+        Try
+            Me.Show()
+            Me.WindowState = FormWindowState.Normal
+            Me.ShowInTaskbar = True
+            Me.Activate()
+            Me.BringToFront()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub UpdateTrayText()
+        Try
+            If _trayIcon Is Nothing Then Return
+            Dim txt = $"ScanKilat Pro — {_totalScans} scan"
+            If txt.Length > 63 Then txt = txt.Substring(0, 63)
+            _trayIcon.Text = txt
+        Catch
+        End Try
+    End Sub
+
+    Private Sub ShowDeviceNotification(title As String, message As String, icon As ToolTipIcon)
+        Try
+            If _trayIcon IsNot Nothing Then
+                _trayIcon.ShowBalloonTip(3000, title, message, icon)
+            End If
+        Catch
+        End Try
+    End Sub
+
+    Private Sub TrayOpen_Click(sender As Object, e As EventArgs)
+        ShowFromTray()
+    End Sub
+
+    Private Sub TrayExit_Click(sender As Object, e As EventArgs)
+        _allowClose = True
+        Me.Close()
     End Sub
 
     Private Sub UpdateQRCode()
@@ -311,6 +432,7 @@ Public Class Form1
 
         UpdatePhoneStatusUI()
         lblLog.Text = $"📱 Perangkat [{deviceName}] terhubung!"
+        ShowDeviceNotification("📱 HP Terhubung", $"Perangkat [{deviceName}] terhubung ke ScanKilat.", ToolTipIcon.Info)
 
         ' Bunyi notifikasi kecil
         Try
@@ -327,6 +449,7 @@ Public Class Form1
 
         UpdatePhoneStatusUI()
         lblLog.Text = $"📴 Perangkat [{deviceName}] terputus"
+        ShowDeviceNotification("📴 HP Terputus", $"Perangkat [{deviceName}] terputus dari ScanKilat.", ToolTipIcon.Warning)
     End Sub
 
     Private Sub _server_BarcodeScanned(text As String, format As String, deviceName As String) Handles _server.BarcodeScanned
@@ -339,6 +462,7 @@ Public Class Form1
         lblTotalVal.Text = _totalScans.ToString()
         lblLastVal.Text = text
         lblLog.Text = $"[SCAN] {text} ({format}) dari {deviceName}"
+        UpdateTrayText()
 
         ' Tambahkan ke DataGridView di posisi paling atas
         dgvScan.Rows.Insert(0, _totalScans, DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss"), deviceName, text, format)
@@ -381,35 +505,38 @@ Public Class Form1
     End Sub
 
     ''' <summary>
-    ''' Mengirimkan karakter secara langsung ke Windows Input Subsystem
-    ''' sehingga otomatis terketik di aplikasi mana pun yang sedang aktif (Notepad, Excel, Software POS).
+    ''' Mengirimkan karakter secara langsung ke Windows Input Subsystem (Keyboard Emulation seperti Barcode to PC)
+    ''' sehingga otomatis terketik di aplikasi mana pun yang sedang aktif (Notepad, Excel, Software POS, browser, dll).
+    ''' Mendukung karakter apa adanya: unicode, simbol, kutip ganda, multiline (\r\n), dan tab.
     ''' </summary>
     Private Sub SendTextToActiveWindow(text As String, suffixSetting As String)
         If String.IsNullOrEmpty(text) Then Return
 
-        ' KEAMANAN: defense-in-depth — server sudah memanggil SanitizeScanText (max 512,
-        ' allowlist alfanumerik + simbol barcode), tapi validasi ulang di sini karena
-        ' event BarcodeScanned adalah trust boundary terakhir sebelum keybd_event.
-        ' Auto-Type default NONAKTIF (lihat Designer) sehingga user harus opt-in eksplisit.
         text = ScannerServer.SanitizeScanText(text)
         If String.IsNullOrEmpty(text) Then Return
 
-        Dim safeChars As New List(Of Char)(text.Length)
-        For Each c In text
-            safeChars.Add(c)
-        Next
+        ' Normalisasi line breaks agar Enter tidak tertekan ganda saat ada vbCrLf
+        Dim textToType = text.Replace(vbCrLf, vbLf).Replace(vbCr, vbLf)
 
         Dim t As New Thread(Sub()
             Try
                 ' Jeda 35ms agar window message pump stabil
                 Thread.Sleep(35)
 
-                For Each c As Char In safeChars
-                    Dim scanCode As UShort = Convert.ToUInt16(c)
-                    ' Key Down UNICODE
-                    keybd_event(0, scanCode, KEYEVENTF_UNICODE, UIntPtr.Zero)
-                    ' Key Up UNICODE
-                    keybd_event(0, scanCode, KEYEVENTF_UNICODE Or KEYEVENTF_KEYUP, UIntPtr.Zero)
+                For Each c As Char In textToType
+                    If c = vbLf Then
+                        keybd_event(VK_RETURN, 0, KEYEVENTF_KEYDOWN, UIntPtr.Zero)
+                        keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, UIntPtr.Zero)
+                    ElseIf c = vbTab Then
+                        keybd_event(VK_TAB, 0, KEYEVENTF_KEYDOWN, UIntPtr.Zero)
+                        keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, UIntPtr.Zero)
+                    Else
+                        Dim scanCode As UShort = Convert.ToUInt16(c)
+                        ' Key Down UNICODE
+                        keybd_event(0, scanCode, KEYEVENTF_UNICODE, UIntPtr.Zero)
+                        ' Key Up UNICODE
+                        keybd_event(0, scanCode, KEYEVENTF_UNICODE Or KEYEVENTF_KEYUP, UIntPtr.Zero)
+                    End If
                     Thread.Sleep(2)
                 Next
 

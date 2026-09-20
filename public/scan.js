@@ -579,7 +579,7 @@ function connectToServer(targetSession, targetKey) {
 $('btnConn').onclick = () => connectToServer();
 
 function send(text, format) {
-  text = String(text || '').trim();
+  text = String(text != null ? text : '');
   if (!text) return;
 
   const now = Date.now();
@@ -858,7 +858,7 @@ $('btnSwitch').onclick = async () => {
 };
 
 $('btnSend').onclick = () => {
-  const v = $('manual').value.trim();
+  const v = $('manual').value;
   if (!v) return;
   send(v, 'MANUAL');
   $('manual').value = '';
