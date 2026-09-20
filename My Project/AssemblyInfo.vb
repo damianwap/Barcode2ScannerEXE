@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 
@@ -8,12 +8,12 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Barcode2Scanner")>
-<Assembly: AssemblyDescription("")>
-<Assembly: AssemblyCompany("")>
-<Assembly: AssemblyProduct("Barcode2Scanner")>
-<Assembly: AssemblyCopyright("Copyright ©  2026")>
-<Assembly: AssemblyTrademark("")>
+<Assembly: AssemblyTitle("ScanKilat Pro")>
+<Assembly: AssemblyDescription("ScanKilat Pro — Ubah HP Jadi Barcode Scanner Nirkabel & Auto-Type ke PC")>
+<Assembly: AssemblyCompany("ScanKilat")>
+<Assembly: AssemblyProduct("ScanKilat Pro")>
+<Assembly: AssemblyCopyright("Copyright © 2026 ScanKilat")>
+<Assembly: AssemblyTrademark("ScanKilat")>
 
 <Assembly: ComVisible(False)>
 

@@ -61,6 +61,18 @@ Public Module CertManager
         Return Nothing
     End Function
 
+    ''' <summary>
+    ''' Mengembalikan fingerprint SHA-256 cert untuk verifikasi manual oleh user
+    ''' (membandingkan dengan yang ditampilkan browser saat warning self-signed).
+    ''' </summary>
+    Public Function GetSha256Fingerprint(cert As X509Certificate2) As String
+        If cert Is Nothing Then Return "-"
+        Using sha = Security.Cryptography.SHA256.Create()
+            Dim hash = sha.ComputeHash(cert.RawData)
+            Return BitConverter.ToString(hash).Replace("-", ":")
+        End Using
+    End Function
+
     Private Function GenerateAndInstall(allowedIPs As List(Of String)) As X509Certificate2
         ' Susun SAN: DNS localhost + semua IP IPv4 aktif (deduplikasi)
         Dim sanParts As New List(Of String) From {"DNS=localhost"}
@@ -86,7 +98,7 @@ Public Module CertManager
         sb.AppendLine("RequestType = Cert") ' self-signed, langsung diinstal ke store
         sb.AppendLine("HashAlgorithm = sha256")
         sb.AppendLine("ValidityPeriod = Years")
-        sb.AppendLine("ValidityPeriodUnits = 10")
+        sb.AppendLine("ValidityPeriodUnits = 2")
         sb.AppendLine("ProviderName = ""Microsoft Software Key Storage Provider""")
         sb.AppendLine()
         sb.AppendLine("[Extensions]")

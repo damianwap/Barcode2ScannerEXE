@@ -103,8 +103,7 @@ function connect(onOpen) {
     return;
   }
   clearTimeout(reconnectTimer);
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(proto + '://' + location.host);
+  ws = new WebSocket('wss://' + location.host);
   
   ws.onopen = () => { 
     setStatus(true, 'Server Terhubung'); 

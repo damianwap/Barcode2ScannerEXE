@@ -23,10 +23,44 @@ Public Class Form1
     Private _totalScans As Integer = 0
     Private _currentUrl As String = ""
     Private _easterEggBuffer As String = ""
+    Private _qrRevealed As Boolean = False
+    Private _qrHideTimer As Windows.Forms.Timer = Nothing
+
+    ' Real-time output: file CSV/XML yang ditulis otomatis tiap scan masuk.
+    ' - CSV: append per baris (selalu valid). Kalau file sedang dibuka/dikunci Excel,
+    '   baris ditampung di _rtPending dan ditulis saat file bebas (tidak auto-mati).
+    ' - XML (SpreadsheetML, terbuka di Excel tanpa library): ditulis ULANG utuh tiap
+    '   scan (header + semua baris + footer) agar file selalu valid dan bisa dibuka
+    '   kapan saja. Append mentah ke XML membuatnya corrupt (tanpa tag penutup).
+    Private _rtOutputEnabled As Boolean = False
+    Private _rtOutputPath As String = ""
+    Private _rtGoogleUrl As String = ""
+    Private _rtRows As New List(Of RtScanRow)()
+    Private _rtPending As New List(Of RtScanRow)()
+    Private _rtLock As New Object()
+
+    Private Class RtScanRow
+        Public Property No As Integer
+        Public Property Waktu As DateTime
+        Public Property Device As String
+        Public Property Barcode As String
+        Public Property Format As String
+    End Class
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.KeyPreview = True
         cmbSuffix.SelectedIndex = 0
+
+        Try
+            Dim icoPath = Path.Combine(Application.StartupPath, "app.ico")
+            If Not File.Exists(icoPath) Then
+                icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico")
+            End If
+            If File.Exists(icoPath) Then
+                Me.Icon = New Icon(icoPath)
+            End If
+        Catch
+        End Try
 
         ' Isi daftar IP adapter jaringan yang tersedia
         Dim ipList = ScannerServer.GetAvailableIPAddresses()
@@ -56,6 +90,7 @@ Public Class Form1
             _server = New ScannerServer(3443, certificate, publicDir)
             _server.Start()
 
+            SetQrRevealed(False)
             UpdateQRCode()
             UpdatePhoneStatusUI()
 
@@ -73,7 +108,9 @@ Public Class Form1
             pnlDevicesBar.Cursor = Cursors.Hand
             lblDevicesBarTitle.Cursor = Cursors.Hand
 
-            lblLog.Text = "Server HTTPS & WebSocket aktif pada port 3443"
+            ' KEAMANAN: tampilkan fingerprint SHA-256 agar user bisa verifikasi
+            ' peringatan browser (self-signed) dan mendeteksi MITM ARP-spoof.
+            lblLog.Text = $"Server HTTPS aktif :3443 — Cert SHA256: {CertManager.GetSha256Fingerprint(certificate)}"
         Catch ex As Exception
             MessageBox.Show("Gagal memulai server internal:" & vbCrLf & ex.Message, "Error Server", MessageBoxButtons.OK, MessageBoxIcon.Error)
             lblServerStatus.Text = "● Server Gagal"
@@ -86,6 +123,10 @@ Public Class Form1
             _server?.StopServer()
         Catch
         End Try
+        Try
+            If _qrHideTimer IsNot Nothing Then _qrHideTimer.Dispose()
+        Catch
+        End Try
     End Sub
 
     Private Sub UpdateQRCode()
@@ -95,10 +136,63 @@ Public Class Form1
         Dim ip = If(selectedInfo IsNot Nothing, selectedInfo.IP, ScannerServer.GetLocalIPAddress())
         _currentUrl = $"https://{ip}:3443/scan.html?session={_server.CurrentSessionCode}&key={_server.CurrentJoinKey}"
 
-        lblSessionCode.Text = $"KODE SESI: {_server.CurrentSessionCode}"
+        ApplyQrMask()
         lblServerStatus.Text = $"● Server: https://{ip}:3443"
-        lnkUrl.Text = "📋 Salin Link Web HP"
 
+        If Not _qrRevealed Then Return
+        RenderQrImage()
+    End Sub
+
+    ''' <summary>
+    ''' QR + kode sesi + URL disembunyikan by default agar tidak bisa difoto /
+    ''' diintip dari layar (shoulder-surfing). Render gambar hanya saat user
+    ''' menekan tombol Tampilkan, dan sembunyikan lagi otomatis setelah 60 detik.
+    ''' </summary>
+    Private Sub SetQrRevealed(revealed As Boolean)
+        _qrRevealed = revealed
+
+        If _qrHideTimer IsNot Nothing Then
+            _qrHideTimer.Stop()
+            _qrHideTimer.Dispose()
+            _qrHideTimer = Nothing
+        End If
+
+        If _qrRevealed Then
+            btnToggleQR.Text = "🙈 Sembunyikan QR"
+            picQRCode.Visible = True
+            lnkUrl.Visible = True
+            cardQR.Size = New Size(316, 368)
+            RenderQrImage()
+            _qrHideTimer = New Windows.Forms.Timer()
+            _qrHideTimer.Interval = 60000
+            AddHandler _qrHideTimer.Tick, Sub()
+                                              SetQrRevealed(False)
+                                              lblLog.Text = "QR disembunyikan otomatis (60 detik). Tekan Tampilkan untuk scan ulang."
+                                          End Sub
+            _qrHideTimer.Start()
+        Else
+            btnToggleQR.Text = "👁 Tampilkan QR untuk Scan"
+            picQRCode.Visible = False
+            lnkUrl.Visible = False
+            cardQR.Size = New Size(316, 181)
+            If picQRCode.Image IsNot Nothing Then
+                picQRCode.Image.Dispose()
+                picQRCode.Image = Nothing
+            End If
+            ApplyQrMask()
+        End If
+    End Sub
+
+    Private Sub ApplyQrMask()
+        If _server Is Nothing OrElse _qrRevealed Then Return
+        lblSessionCode.Text = "KODE SESI: ••••••"
+        lnkUrl.Text = "📋 Salin Link Web HP"
+    End Sub
+
+    Private Sub RenderQrImage()
+        If _server Is Nothing OrElse String.IsNullOrEmpty(_currentUrl) Then Return
+        lblSessionCode.Text = $"KODE SESI: {_server.CurrentSessionCode}"
+        lnkUrl.Text = "📋 Salin Link Web HP"
         Using qrGen As New QRCodeGenerator()
             Using qrData = qrGen.CreateQrCode(_currentUrl, QRCodeGenerator.ECCLevel.Q)
                 Using qrCode As New QRCode(qrData)
@@ -108,6 +202,10 @@ Public Class Form1
                 End Using
             End Using
         End Using
+    End Sub
+
+    Private Sub btnToggleQR_Click(sender As Object, e As EventArgs) Handles btnToggleQR.Click
+        SetQrRevealed(Not _qrRevealed)
     End Sub
 
     Private Sub UpdatePhoneStatusUI()
@@ -268,6 +366,9 @@ Public Class Form1
             Dim suffixMode = If(cmbSuffix.SelectedItem IsNot Nothing, cmbSuffix.SelectedItem.ToString(), "Enter")
             SendTextToActiveWindow(text, suffixMode)
         End If
+
+        AppendRealTimeOutput(DateTime.Now, deviceName, text, format)
+        PostToGoogleSheets(DateTime.Now, deviceName, text, format)
     End Sub
 
     Private Sub _server_ServerLog(message As String) Handles _server.ServerLog
@@ -285,17 +386,17 @@ Public Class Form1
     Private Sub SendTextToActiveWindow(text As String, suffixSetting As String)
         If String.IsNullOrEmpty(text) Then Return
 
-        ' Sanitasi teks: hapus karakter kontrol berbahaya (seperti \0, \b, \r, \n, \x1b)
-        ' Batasi panjang maksimal 500 karakter untuk mencegah flooding / injection serangan keystroke
-        Dim safeChars As New List(Of Char)()
-        For Each c In text
-            If Not Char.IsControl(c) OrElse c = vbTab Then
-                safeChars.Add(c)
-                If safeChars.Count >= 500 Then Exit For
-            End If
-        Next
+        ' KEAMANAN: defense-in-depth — server sudah memanggil SanitizeScanText (max 512,
+        ' allowlist alfanumerik + simbol barcode), tapi validasi ulang di sini karena
+        ' event BarcodeScanned adalah trust boundary terakhir sebelum keybd_event.
+        ' Auto-Type default NONAKTIF (lihat Designer) sehingga user harus opt-in eksplisit.
+        text = ScannerServer.SanitizeScanText(text)
+        If String.IsNullOrEmpty(text) Then Return
 
-        If safeChars.Count = 0 Then Return
+        Dim safeChars As New List(Of Char)(text.Length)
+        For Each c In text
+            safeChars.Add(c)
+        Next
 
         Dim t As New Thread(Sub()
             Try
@@ -331,8 +432,9 @@ Public Class Form1
     Private Sub btnNewSession_Click(sender As Object, e As EventArgs) Handles btnNewSession.Click
         If _server Is Nothing Then Return
         _server.GenerateNewSession()
+        SetQrRevealed(False)
         UpdateQRCode()
-        lblLog.Text = "Sesi baru berhasil dibuat. Silakan scan ulang dari HP."
+        lblLog.Text = "Sesi baru dibuat & QR disembunyikan. Tekan Tampilkan untuk scan ulang dari HP."
     End Sub
 
     Private Sub cmbNetworkIP_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbNetworkIP.SelectedIndexChanged
@@ -343,7 +445,7 @@ Public Class Form1
         Try
             Dim psi As New ProcessStartInfo()
             psi.FileName = "netsh"
-            psi.Arguments = "advfirewall firewall add rule name=""Barcode2Scanner Port 3443"" dir=in action=allow protocol=TCP localport=3443 profile=private,domain"
+            psi.Arguments = "advfirewall firewall add rule name=""Barcode2Scanner Port 3443"" dir=in action=allow protocol=TCP localport=3443 profile=private,domain remoteip=localsubnet"
             psi.Verb = "runas"
             psi.UseShellExecute = True
             psi.WindowStyle = ProcessWindowStyle.Hidden
@@ -361,7 +463,10 @@ Public Class Form1
             Try
                 Clipboard.SetText(_currentUrl)
                 lblLog.Text = "URL berhasil disalin ke clipboard!"
-                MessageBox.Show("Link koneksi HP berhasil disalin ke clipboard:" & vbCrLf & _currentUrl, "Link Disalin", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                MessageBox.Show("Link koneksi HP berhasil disalin ke clipboard:" & vbCrLf & _currentUrl & vbCrLf & vbCrLf &
+                                "⚠️ Link ini berisi KUNCI koneksi — jangan dibagikan ke orang lain / grup chat. " &
+                                "Siapa pun yang punya link bisa mengirim ketikan ke laptop Anda sampai sesi dirotasi.",
+                                "Link Disalin", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Catch ex As Exception
                 MessageBox.Show("Gagal menyalin URL: " & ex.Message)
             End Try
@@ -440,6 +545,184 @@ Public Class Form1
             lblLastVal.Text = "-"
             lblLog.Text = "Tabel barcode telah dibersihkan."
         End If
+    End Sub
+
+    ' ================= REAL-TIME CSV / XLSX =================
+
+    Private Sub btnRealTime_Click(sender As Object, e As EventArgs) Handles btnRealTime.Click
+        If Not _rtOutputEnabled Then
+            Using sfd As New SaveFileDialog()
+                sfd.Filter = "CSV File (*.csv)|*.csv|Excel XML (*.xml)|*.xml"
+                sfd.FileName = $"Barcode_Live_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                If sfd.ShowDialog() <> DialogResult.OK Then Return
+                _rtOutputPath = sfd.FileName
+            End Using
+            SyncLock _rtLock
+                _rtRows.Clear()
+                _rtPending.Clear()
+            End SyncLock
+            Try
+                If _rtOutputPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) Then
+                    File.WriteAllText(_rtOutputPath, BuildSpreadsheetMlHeader() & BuildSpreadsheetMlFooter(), Encoding.UTF8)
+                Else
+                    File.WriteAllText(_rtOutputPath, """No"",""Waktu"",""Perangkat"",""Barcode"",""Format""" & vbCrLf, Encoding.UTF8)
+                End If
+            Catch ex As Exception
+                MessageBox.Show("Gagal menyiapkan file real-time:" & vbCrLf & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End Try
+            _rtOutputEnabled = True
+            btnRealTime.Text = "⏺ Real-Time: ON"
+            btnRealTime.BackColor = Color.FromArgb(185, 28, 28)
+            lblOutputPath.Text = Path.GetFileName(_rtOutputPath)
+            toolTipDevices.SetToolTip(lblOutputPath, _rtOutputPath)
+            lblLog.Text = $"Real-time output AKTIF → {Path.GetFileName(_rtOutputPath)}"
+        Else
+            Try
+                FlushRealTimeFile()
+            Catch
+            End Try
+            _rtOutputEnabled = False
+            btnRealTime.Text = "▶ Real-Time: OFF"
+            btnRealTime.BackColor = Color.FromArgb(5, 150, 105)
+            lblLog.Text = "Real-time output dimatikan."
+        End If
+    End Sub
+
+    Private Sub AppendRealTimeOutput(waktu As DateTime, device As String, barcode As String, fmt As String)
+        If Not _rtOutputEnabled OrElse String.IsNullOrEmpty(_rtOutputPath) Then Return
+        Dim row As New RtScanRow With {
+            .No = _totalScans,
+            .Waktu = waktu,
+            .Device = device,
+            .Barcode = barcode,
+            .Format = fmt
+        }
+        SyncLock _rtLock
+            _rtPending.Add(row)
+        End SyncLock
+        Try
+            FlushRealTimeFile()
+            lblLog.Text = $"[SCAN] {barcode} ({fmt}) → tersimpan di {Path.GetFileName(_rtOutputPath)}"
+        Catch ex As Exception
+            lblLog.Text = $"[SCAN] {barcode} ({fmt}) → file terkunci, antre {_rtPending.Count} baris (tutup file di Excel untuk flush)"
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Tulis antrean ke file. CSV: append baris baru (selalu valid).
+    ''' XML: tulis ulang utuh (header + semua baris + footer) agar selalu bisa dibuka di Excel.
+    ''' Melempar IOException jika file dikunci — baris tetap di antrean.
+    ''' </summary>
+    Private Sub FlushRealTimeFile()
+        Dim pending As List(Of RtScanRow)
+        Dim allRows As List(Of RtScanRow)
+        SyncLock _rtLock
+            If _rtPending.Count = 0 Then Return
+            pending = New List(Of RtScanRow)(_rtPending)
+            allRows = New List(Of RtScanRow)(_rtRows)
+            allRows.AddRange(pending)
+        End SyncLock
+
+        If _rtOutputPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) Then
+            Dim sb As New StringBuilder()
+            sb.Append(BuildSpreadsheetMlHeader())
+            For Each r In allRows
+                sb.Append(BuildSpreadsheetMlRow(r))
+            Next
+            sb.Append(BuildSpreadsheetMlFooter())
+            File.WriteAllText(_rtOutputPath, sb.ToString(), Encoding.UTF8)
+        Else
+            Dim sb As New StringBuilder()
+            For Each r In pending
+                sb.Append($"""{EscapeCsv(r.No.ToString())}"",""{EscapeCsv(r.Waktu.ToString("dd-MM-yyyy HH:mm:ss"))}"",""{EscapeCsv(r.Device)}"",""{EscapeCsv(r.Barcode)}"",""{EscapeCsv(r.Format)}""{vbCrLf}")
+            Next
+            AppendText(_rtOutputPath, sb.ToString())
+        End If
+
+        SyncLock _rtLock
+            _rtRows.AddRange(pending)
+            _rtPending.RemoveRange(0, pending.Count)
+        End SyncLock
+    End Sub
+
+    Private Shared Sub AppendText(path As String, content As String)
+        Using fs As New FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read)
+            Using sw As New StreamWriter(fs, Encoding.UTF8)
+                sw.Write(content)
+            End Using
+        End Using
+    End Sub
+
+    Private Shared Function XmlEsc(v As String) As String
+        If String.IsNullOrEmpty(v) Then Return ""
+        Return v.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("""", "&quot;")
+    End Function
+
+    Private Shared Function BuildSpreadsheetMlHeader() As String
+        Return "<?xml version=""1.0"" encoding=""UTF-8""?>" & vbCrLf &
+            "<Workbook xmlns=""urn:schemas-microsoft-com:office:spreadsheet"">" & vbCrLf &
+            "<Worksheet ss:Name=""Scan"" xmlns:ss=""urn:schemas-microsoft-com:office:spreadsheet""><Table>" & vbCrLf &
+            "<Row><Cell><Data ss:Type=""String"">No</Data></Cell>" &
+            "<Cell><Data ss:Type=""String"">Waktu</Data></Cell>" &
+            "<Cell><Data ss:Type=""String"">Perangkat</Data></Cell>" &
+            "<Cell><Data ss:Type=""String"">Barcode</Data></Cell>" &
+            "<Cell><Data ss:Type=""String"">Format</Data></Cell></Row>" & vbCrLf
+    End Function
+
+    Private Function BuildSpreadsheetMlRow(r As RtScanRow) As String
+        Return $"<Row><Cell><Data ss:Type=""Number"">{r.No}</Data></Cell>" &
+            $"<Cell><Data ss:Type=""String"">{XmlEsc(r.Waktu.ToString("dd-MM-yyyy HH:mm:ss"))}</Data></Cell>" &
+            $"<Cell><Data ss:Type=""String"">{XmlEsc(r.Device)}</Data></Cell>" &
+            $"<Cell><Data ss:Type=""String"">{XmlEsc(r.Barcode)}</Data></Cell>" &
+            $"<Cell><Data ss:Type=""String"">{XmlEsc(r.Format)}</Data></Cell></Row>{vbCrLf}"
+    End Function
+
+    Private Shared Function BuildSpreadsheetMlFooter() As String
+        Return "</Table></Worksheet></Workbook>" & vbCrLf
+    End Function
+
+    ' ================= GOOGLE SHEETS (via Apps Script webhook) =================
+
+    Private Sub btnSheets_Click(sender As Object, e As EventArgs) Handles btnSheets.Click
+        Dim url = InputBox("Tempel URL Web App Google Apps Script (berakhiran /exec):" & vbCrLf & vbCrLf &
+                           "Lihat panduan di SHEETS_SETUP.md", "Google Sheets Webhook", _rtGoogleUrl)
+        If String.IsNullOrWhiteSpace(url) Then Return
+        url = url.Trim()
+        If Not (url.StartsWith("https://script.google.com/", StringComparison.OrdinalIgnoreCase) AndAlso
+                url.IndexOf("/exec", StringComparison.OrdinalIgnoreCase) >= 0) Then
+            MessageBox.Show("URL tidak valid. Harus https://script.google.com/.../exec", "URL Salah", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+        _rtGoogleUrl = url
+        lblSheetsStatus.Text = "Sheets: ON"
+        lblSheetsStatus.ForeColor = Color.FromArgb(52, 211, 153)
+        lblLog.Text = "Google Sheets webhook AKTIF."
+    End Sub
+
+    Private Sub PostToGoogleSheets(waktu As DateTime, device As String, barcode As String, fmt As String)
+        If String.IsNullOrEmpty(_rtGoogleUrl) Then Return
+        Dim url = _rtGoogleUrl
+        Dim payload = "{""waktu"":""" & waktu.ToString("dd-MM-yyyy HH:mm:ss").Replace("""", "\""") & """,""perangkat"":""" &
+            device.Replace("""", "\""") & """,""barcode"":""" & barcode.Replace("""", "\""") & """,""format"":""" &
+            fmt.Replace("""", "\""") & """,""key"":""" & _server.CurrentJoinKey & """}"
+        Dim t As New Thread(Sub()
+                                Try
+                                    Dim req = CType(Net.WebRequest.Create(url), Net.HttpWebRequest)
+                                    req.Method = "POST"
+                                    req.ContentType = "application/json"
+                                    req.Timeout = 8000
+                                    Dim bytes = Encoding.UTF8.GetBytes(payload)
+                                    Using rs = req.GetRequestStream()
+                                        rs.Write(bytes, 0, bytes.Length)
+                                    End Using
+                                    Using resp = CType(req.GetResponse(), Net.HttpWebResponse)
+                                    End Using
+                                Catch
+                                End Try
+                            End Sub)
+        t.IsBackground = True
+        t.Start()
     End Sub
 
     ''' <summary>

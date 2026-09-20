@@ -2,825 +2,245 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>HP Scanner Pro — Mobile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ScanKilat — Scanner Mobile</title>
+<link rel="icon" type="image/png" href="/logo.png">
 <style>
-  :root {
-    --bg-base: #1a1a2e;
-    --bg-card: #16213e;
-    --border: #2a2a4a;
-    --text-primary: #e0e0e0;
-    --text-secondary: #8888a0;
-    --text-muted: #5a5a72;
-    --primary: #4a6cf7;
-    --success: #2ecc71;
-    --warning: #e6a817;
-    --danger: #e74c3c;
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 12px;
-    --radius-full: 9999px;
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: var(--font-sans);
-    background-color: var(--bg-base);
-    color: var(--text-primary);
-    min-height: 100vh;
-    padding-bottom: env(safe-area-inset-bottom, 30px);
-    overflow-x: hidden;
-  }
-
-  /* Header */
-  header {
-    background: #111128;
-    border-bottom: 1px solid var(--border);
-    padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .header-top {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .brand-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .brand-icon svg {
-    width: 17px;
-    height: 17px;
-    fill: none;
-    stroke: #ffffff;
-    stroke-width: 2.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .brand h1 {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffffff;
-  }
-
-  .brand span.tag {
-    font-size: 9px;
-    font-weight: 700;
-    background: var(--primary);
-    color: #ffffff;
-    padding: 2px 6px;
-    border-radius: var(--radius-full);
-    margin-left: 4px;
-  }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: var(--radius-full);
-    background: #222244;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-  }
-
-  .status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--danger);
-    transition: all 0.2s ease;
-  }
-
-  .status-pill.on {
-    background: #1a3a2a;
-    border-color: #2a5a3a;
-    color: var(--success);
-  }
-
-  .status-pill.on .status-dot {
-    background: var(--success);
-    animation: pulse 2s infinite;
-  }
-
-  .status-pill.waiting {
-    background: #3a3020;
-    border-color: #5a4a20;
-    color: var(--warning);
-  }
-
-  .status-pill.waiting .status-dot {
-    background: var(--warning);
-    animation: pulse 1s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.6; }
-  }
-
-  /* Flash Screen Overlay */
-  .flash {
-    position: fixed;
-    inset: 0;
-    background: rgba(46, 204, 113, 0.3);
-    pointer-events: none;
-    opacity: 0;
-    z-index: 99;
-  }
-
-  .flash.go {
-    animation: flashAnim 0.3s ease-out;
-  }
-
-  @keyframes flashAnim {
-    0% { opacity: 0.8; }
-    100% { opacity: 0; }
-  }
-
-  /* Main Container */
-  .wrap {
-    padding: 12px 14px;
-    max-width: 480px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  /* Cards */
-  .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 16px 14px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-
-  .card-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #d0d0e0;
-  }
-
-  .card-title svg {
-    width: 16px;
-    height: 16px;
-    color: var(--text-secondary);
-    stroke-width: 2;
-  }
-
-  /* Code Section */
-  .code-input-box {
-    position: relative;
-    margin-bottom: 12px;
-  }
-
-  #code {
-    width: 100%;
-    padding: 12px;
-    border-radius: var(--radius-md);
-    border: 2px solid var(--border);
-    background: #111128;
-    color: var(--warning);
-    font-size: 24px;
-    text-align: center;
-    letter-spacing: 8px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    font-family: 'Consolas', 'Menlo', monospace;
-    outline: none;
-    transition: border-color 0.2s ease;
-  }
-
-  #code:focus {
-    border-color: var(--primary);
-  }
-
-  #code::placeholder {
-    color: #3a3a55;
-    letter-spacing: 8px;
-  }
-
-  /* Locked Device Type Badge */
-  .device-field-wrap {
-    margin-bottom: 14px;
-    background: #111128;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-  }
-
-  .device-field-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-  }
-
-  .device-field-label span.detect-hint {
-    font-size: 10px;
-    color: var(--primary);
-    font-weight: 700;
-  }
-
-  .device-info-badge {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #0e0e22;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 9px 12px;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 600;
-    user-select: none;
-  }
-
-  .device-info-badge svg.icon-dev {
-    width: 17px;
-    height: 17px;
-    stroke: var(--text-secondary);
-    fill: none;
-    stroke-width: 2;
-    flex-shrink: 0;
-  }
-
-  /* Connected Session Banner (Collapsed) */
-  .session-connected-bar {
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-    background: #1a3a2a;
-    border: 1px solid #2a5a3a;
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
-  }
-
-  .session-connected-bar.active {
-    display: flex;
-  }
-
-  .scb-left {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .scb-top {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #c0e8d0;
-  }
-
-  .scb-code {
-    font-family: monospace;
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--warning);
-    letter-spacing: 2px;
-  }
-
-  .scb-device {
-    font-size: 11px;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .scb-btn {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 5px 11px;
-    border-radius: var(--radius-full);
-    background: #2a2a4a;
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-    cursor: pointer;
-  }
-
-  /* Buttons */
-  button {
-    font-family: inherit;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    border-radius: var(--radius-md);
-    transition: opacity 0.15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  button:active {
-    opacity: 0.8;
-  }
-
-  button:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  .btn-primary {
-    width: 100%;
-    padding: 12px 18px;
-    font-size: 14px;
-    font-weight: 700;
-    background: var(--primary);
-    color: #ffffff;
-  }
-
-  .btn-start-cam {
-    width: 100%;
-    padding: 14px 20px;
-    font-size: 15px;
-    font-weight: 700;
-    background: var(--success);
-    color: #ffffff;
-    margin-top: 12px;
-  }
-
-  .btn-start-cam.stop {
-    background: var(--danger);
-    color: #ffffff;
-  }
-
-  .btn-ctrl {
-    flex: 1;
-    padding: 10px 14px;
-    font-size: 12.5px;
-    font-weight: 600;
-    background: #222244;
-    color: var(--text-primary);
-    border: 1px solid var(--border);
-  }
-
-  .btn-ctrl.on {
-    background: #3a3020;
-    border-color: #5a4a20;
-    color: var(--warning);
-  }
-
-  /* Viewfinder Area */
-  .viewfinder-wrap {
-    position: relative;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    background: #000000;
-    min-height: 260px;
-    border: 1px solid var(--border);
-  }
-
-  #reader {
-    width: 100% !important;
-    border: none !important;
-  }
-
-  #reader video {
-    width: 100% !important;
-    border-radius: var(--radius-lg);
-    object-fit: cover;
-  }
-
-  /* Laser Scan Animation */
-  .laser-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--danger);
-    opacity: 0.9;
-    display: none;
-    z-index: 10;
-    pointer-events: none;
-  }
-
-  .laser-line.active {
-    display: block;
-    animation: scanLaser 2s ease-in-out infinite alternate;
-  }
-
-  @keyframes scanLaser {
-    0% { top: 10%; }
-    100% { top: 90%; }
-  }
-
-  /* Viewfinder corner brackets */
-  .vf-corners {
-    position: absolute;
-    inset: 16px;
-    pointer-events: none;
-    z-index: 9;
-    border-radius: 8px;
-  }
-
-  .vf-c {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-color: #ffffff;
-    border-style: solid;
-    opacity: 0.5;
-  }
-  .vf-tl { top: 0; left: 0; border-width: 2px 0 0 2px; border-top-left-radius: 6px; }
-  .vf-tr { top: 0; right: 0; border-width: 2px 2px 0 0; border-top-right-radius: 6px; }
-  .vf-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; border-bottom-left-radius: 6px; }
-  .vf-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-bottom-right-radius: 6px; }
-
-  .vf-placeholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    text-align: center;
-    color: var(--text-muted);
-    gap: 10px;
-  }
-
-  .vf-placeholder svg {
-    width: 40px;
-    height: 40px;
-    stroke: var(--text-muted);
-    fill: none;
-    stroke-width: 1.5;
-  }
-
-  .vf-placeholder p {
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  /* Camera Controls Row */
-  .cam-controls {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  /* Success Banner / Toast */
-  .ok-banner {
-    min-height: 24px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--success);
-    text-align: center;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-  }
-
-  /* Error Box */
-  #errbox {
-    display: none;
-    background: #2a1515;
-    border: 1px solid #4a2020;
-    color: #f0a0a0;
-    font-size: 12px;
-    border-radius: var(--radius-md);
-    padding: 12px;
-    margin-top: 12px;
-    line-height: 1.6;
-  }
-
-  /* Continuous Scan Toggle */
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 12px;
-    padding: 8px 4px 0;
-    border-top: 1px solid var(--border);
-    cursor: pointer;
-  }
-
-  .toggle-row-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-
-  .custom-switch {
-    position: relative;
-    width: 36px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  .custom-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #333355;
-    transition: 0.2s ease;
-    border-radius: 20px;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: #ffffff;
-    transition: 0.2s ease;
-    border-radius: 50%;
-  }
-
-  input:checked + .slider {
-    background: var(--success);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(16px);
-  }
-
-  /* Manual Entry */
-  .manual-wrap {
-    display: flex;
-    gap: 8px;
-  }
-
-  #manual {
-    flex: 1;
-    background: #111128;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 11px 14px;
-    color: #ffffff;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s ease;
-  }
-
-  #manual:focus {
-    border-color: var(--primary);
-  }
-
-  #btnSend {
-    padding: 11px 16px;
-    background: var(--primary);
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 13px;
-  }
-
-  /* History list */
-  .hist-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .hist-cnt-badge {
-    font-size: 11px;
-    font-weight: 700;
-    background: #1a3a2a;
-    color: var(--success);
-    border: 1px solid #2a5a3a;
-    padding: 3px 9px;
-    border-radius: var(--radius-full);
-  }
-
-  .hist {
-    max-height: 240px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .hist div {
-    background: #111128;
-    border: 1px solid var(--border);
-    padding: 9px 12px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    animation: fadeIn 0.15s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-3px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .hist .code-txt {
-    font-family: 'Consolas', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    word-break: break-all;
-  }
-
-  .hist small {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--success);
-    white-space: nowrap;
-  }
-
-  .hist-empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 12px;
-    padding: 16px 8px;
-  }
-
-  .hint-sub {
-    font-size: 11px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    margin-top: 8px;
-    text-align: center;
-  }
-
-  /* Scanner Pairing QR Code */
-  .btn-scan-qr {
-    width: 100%;
-    padding: 13px 16px;
-    background: var(--primary);
-    border: 1px solid var(--primary);
-    border-radius: var(--radius-md);
-    color: #ffffff;
-    font-size: 14.5px;
-    font-weight: 700;
-    font-family: inherit;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-  .btn-scan-qr:hover {
-    background: var(--primary-hover);
-  }
-  .btn-scan-qr:active {
-    background: var(--primary-hover);
-    transform: translateY(1px);
-  }
-  .qr-scan-subhint {
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-top: 6px;
-    margin-bottom: 12px;
-  }
-  .divider-or {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    margin: 14px 0 12px;
-    color: var(--text-muted);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-  }
-  .divider-or::before, .divider-or::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px dashed var(--border);
-  }
-  .divider-or span {
-    padding: 0 10px;
-  }
-  .pair-viewfinder-wrap {
-    background: #101026;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 10px;
-    margin-bottom: 14px;
-    animation: fadeIn 0.25s ease;
-  }
-  .pair-viewfinder-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #38bdf8;
-  }
-  .btn-close-pair {
-    background: #2a2a4a;
-    border: none;
-    border-radius: var(--radius-sm);
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    cursor: pointer;
-  }
-  .pair-scanner-box {
-    position: relative;
-    width: 100%;
-    min-height: 220px;
-    background: #000;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-  }
-  .pair-scanner-box #pairReader {
-    width: 100% !important;
-  }
-  .pair-scanner-box #pairReader video {
-    border-radius: var(--radius-sm);
-    width: 100% !important;
-    object-fit: cover;
-  }
-  .pair-laser {
-    position: absolute;
-    top: 50%;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    background: var(--success);
-    animation: scanAnim 1.8s infinite ease-in-out;
-    pointer-events: none;
-  }
-  @keyframes scanAnim {
-    0%, 100% { top: 15%; }
-    50% { top: 85%; }
-  }
-  .pair-tip {
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-top: 6px;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
+  :root{
+    --bg:#e8edf3;
+    --surface:#ffffff;
+    --surface-2:#f1f5f9;
+    --border:#e2e8f0;
+    --border-strong:#cbd5e1;
+    --ink:#0f172a;
+    --ink-2:#334155;
+    --muted:#5c6b82;
+    --navy:#0b2447;
+    --navy-2:#14305c;
+    --navy-deep:#071431;
+    --primary:#1d4ed8;
+    --primary-pressed:#1e40af;
+    --primary-soft:#eff6ff;
+    --success:#15803d;
+    --success-bg:#ecfdf5;
+    --success-border:#6ee7b7;
+    --success-ink:#14532d;
+    --warning:#b45309;
+    --warning-bg:#fef3c7;
+    --warning-border:#fcd34d;
+    --danger:#dc2626;
+    --danger-bg:#fef2f2;
+    --danger-border:#fecaca;
+    --lime:#bef264;
+    --lime-ink:#0b2447;
+    --cyan:#22d3ee;
+    --r-sm:10px;
+    --r-md:12px;
+    --r-lg:16px;
+    --r-full:999px;
+    --shadow-card:0 1px 2px rgba(15,23,42,.06),0 12px 28px -18px rgba(11,36,71,.25);
+    --shadow-pop:0 8px 20px -10px rgba(15,23,42,.25);
+    --shadow-btn:0 8px 16px -10px rgba(29,78,216,.55);
+    --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  body{
+    font-family:var(--font);
+    background:var(--bg);
+    background-image:radial-gradient(110% 200px at 50% -50px,rgba(11,36,71,.12),transparent 70%);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .12s ease,opacity .15s ease}
+  button:active{transform:translateY(1px)}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+  button:disabled{cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+  /* ===== Header compact premium ===== */
+  header{
+    position:sticky;top:0;z-index:40;
+    background:rgba(7,20,49,.97);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 8px;
+  }
+  header::after{content:"";display:block;height:2px;max-width:480px;margin:8px auto -8px;background:var(--lime);opacity:.9;border-radius:2px}
+  .header-top{width:100%;max-width:480px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0}
+  .brand-icon{width:34px;height:34px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--navy-deep);border:1px solid rgba(190,242,100,.4)}
+  .brand-icon img{width:100%;height:100%;object-fit:cover;display:block}
+  .brand-txt{min-width:0;line-height:1.2}
+  .brand-txt h1{font-size:13.5px;font-weight:800;letter-spacing:.08em;color:#fff;display:flex;align-items:center;gap:6px}
+  .brand-txt h1 .tag{font-size:9px;font-weight:800;letter-spacing:.07em;background:var(--lime);color:var(--lime-ink);padding:2px 7px;border-radius:var(--r-full)}
+  .brand-txt p{font-size:11px;color:#94a3b8;font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .status-pill{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:var(--r-full);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#e2e8f0;white-space:nowrap;flex-shrink:0;min-height:36px;line-height:1}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0}
+  .status-pill.on{background:#16a34a;border-color:#16a34a;color:#fff;box-shadow:0 4px 14px -6px rgba(22,163,74,.8)}
+  .status-pill.on .status-dot{background:#fff;animation:pulse 1.6s ease-in-out infinite}
+  .status-pill.waiting{background:var(--warning-bg);border-color:var(--warning-border);color:#92400e}
+  .status-pill.waiting .status-dot{background:#f59e0b;animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.8)}}
+
+  /* ===== Layout ===== */
+  .wrap{padding:12px 14px 8px;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 14px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--navy) 0%,var(--primary) 100%)}
+  .step-head{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+  .step-num{width:28px;height:28px;border-radius:50%;background:var(--navy);color:var(--lime);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;border:1px solid rgba(190,242,100,.4)}
+  .step-txt{min-width:0;flex:1}
+  .step-kicker{display:block;font-size:10px;font-weight:800;letter-spacing:.09em;color:var(--primary);margin-bottom:2px}
+  .step-txt h2{font-size:14.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em;line-height:1.3}
+  .step-txt p{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.55}
+
+  /* ===== Step 1 ===== */
+  .btn-scan-qr{width:100%;min-height:52px;padding:13px 16px;background:var(--navy);border:1px solid var(--navy);border-radius:var(--r-md);color:#fff;font-size:14.5px;font-weight:800}
+  .btn-scan-qr:hover{background:var(--navy-2)}
+  .btn-scan-qr:active{background:var(--navy-deep)}
+  .btn-scan-qr svg{flex-shrink:0;stroke:var(--lime)}
+  .qr-scan-subhint{font-size:11.5px;color:var(--muted);text-align:center;margin:8px 2px 0;line-height:1.55}
+  .pair-viewfinder-wrap{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px;margin-top:12px}
+  .pair-viewfinder-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;font-weight:800;color:var(--primary)}
+  .btn-close-pair{background:#fff;border:1.5px solid var(--border-strong);border-radius:10px;color:var(--ink);font-size:12.5px;font-weight:800;min-height:44px;padding:10px 14px;flex-shrink:0}
+  .btn-close-pair:hover{background:var(--surface-2)}
+  .pair-scanner-box{position:relative;width:100%;min-height:220px;background:var(--navy-deep);border-radius:10px;overflow:hidden;border:1px solid #1e293b}
+  .pair-scanner-box #pairReader{width:100%!important}
+  .pair-scanner-box #pairReader video{border-radius:10px;width:100%!important;object-fit:cover}
+  .pair-laser{position:absolute;top:50%;left:12%;right:12%;height:2px;background:linear-gradient(90deg,transparent,var(--lime),transparent);box-shadow:0 0 12px rgba(190,242,100,.7);pointer-events:none;border-radius:99px}
+  .pair-tip{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+  .divider-or{display:flex;align-items:center;text-align:center;margin:14px 0 12px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.09em}
+  .divider-or::before,.divider-or::after{content:"";flex:1;border-bottom:1px dashed var(--border-strong)}
+  .divider-or span{padding:0 10px;background:var(--surface)}
+  .field-label{display:block;font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:7px}
+  .code-input-box{margin-bottom:12px}
+  #code{width:100%;min-height:56px;padding:12px 8px;border-radius:var(--r-md);border:2px solid var(--border);background:var(--surface-2);color:var(--navy);font-size:24px;text-align:center;letter-spacing:8px;text-indent:8px;font-weight:800;font-variant-numeric:tabular-nums;font-family:var(--mono);transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
+  #code::placeholder{color:#9db0c7;letter-spacing:8px}
+  #code:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(29,78,216,.14);outline:none}
+  .device-field-wrap{margin-bottom:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px}
+  .device-field-label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:7px}
+  .device-field-label .detect-hint{font-size:10px;color:var(--success-ink);font-weight:800;background:var(--success-bg);border:1px solid var(--success-border);padding:3px 8px;border-radius:var(--r-full);white-space:nowrap}
+  .device-info-badge{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 12px;color:var(--ink);font-size:13.5px;font-weight:700;user-select:none;min-height:48px;overflow:hidden}
+  .device-info-badge span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .device-info-badge svg.icon-dev{width:18px;height:18px;stroke:var(--primary);fill:none;stroke-width:2;flex-shrink:0}
+  .btn-primary{width:100%;min-height:52px;padding:13px 18px;font-size:14.5px;font-weight:800;background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:var(--r-md);box-shadow:var(--shadow-btn)}
+  .btn-primary:hover{background:var(--primary-pressed);border-color:var(--primary-pressed)}
+  .btn-primary:disabled{background:#e9eef4;border-color:var(--border);color:#94a3b8}
+  .hint-sub{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:10px;text-align:center}
+
+  /* ===== Session bar ===== */
+  .session-connected-bar{display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--success-bg);border:1px solid var(--success-border);border-left:4px solid var(--success);border-radius:var(--r-lg);padding:12px 12px 12px 14px;box-shadow:var(--shadow-card)}
+  .session-connected-bar.active{display:flex;animation:toastIn .22s ease}
+  .scb-left{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .scb-top{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--success-ink)}
+  .scb-code{font-family:var(--mono);font-size:16px;font-weight:800;color:var(--warning);letter-spacing:2px}
+  .scb-device{font-size:11.5px;color:var(--ink-2);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scb-device span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scb-btn{font-size:12.5px;font-weight:800;min-height:44px;padding:10px 16px;border-radius:var(--r-full);background:#fff;color:var(--ink);border:1.5px solid var(--border-strong);flex-shrink:0}
+  .scb-btn:hover{background:var(--surface-2)}
+
+  /* ===== Step 2 viewfinder ===== */
+  .viewfinder-wrap{position:relative;border-radius:14px;overflow:hidden;background:var(--navy-deep);min-height:260px;border:1px solid #1e293b}
+  #reader{width:100%!important;border:none!important}
+  #reader video{width:100%!important;border-radius:14px;object-fit:cover;display:block}
+  .laser-line{position:absolute;top:50%;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan) 20%,var(--lime) 50%,var(--cyan) 80%,transparent);box-shadow:0 0 14px rgba(34,211,238,.7);border-radius:99px;opacity:.95;display:none;z-index:10;pointer-events:none;will-change:transform}
+  .laser-line.active{display:block;animation:scanSweep 2.4s cubic-bezier(.45,0,.35,1) infinite}
+  @keyframes scanSweep{0%,100%{transform:translateY(-52px);opacity:.7}50%{transform:translateY(52px);opacity:1}}
+  .vf-corners{position:absolute;inset:16px;pointer-events:none;z-index:9}
+  .vf-c{position:absolute;width:26px;height:26px;border:0 solid var(--lime);filter:drop-shadow(0 0 5px rgba(190,242,100,.55))}
+  .vf-tl{top:0;left:0;border-top-width:3px;border-left-width:3px;border-top-left-radius:8px}
+  .vf-tr{top:0;right:0;border-top-width:3px;border-right-width:3px;border-top-right-radius:8px}
+  .vf-bl{bottom:0;left:0;border-bottom-width:3px;border-left-width:3px;border-bottom-left-radius:8px}
+  .vf-br{bottom:0;right:0;border-bottom-width:3px;border-right-width:3px;border-bottom-right-radius:8px}
+  .vf-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;color:#94a3b8;gap:10px;background:radial-gradient(75% 60% at 50% 38%,rgba(34,211,238,.09),transparent 70%)}
+  .vf-icon-ring{width:60px;height:60px;border-radius:18px;background:rgba(255,255,255,.06);border:1px dashed rgba(148,163,184,.55);display:flex;align-items:center;justify-content:center}
+  .vf-icon-ring svg{width:28px;height:28px;stroke:#cbd5e1;fill:none;stroke-width:1.6}
+  .vf-placeholder p{font-size:13px;font-weight:500;line-height:1.6;color:#cbd5e1}
+  .vf-placeholder p strong{color:#fff}
+  .vf-chip{font-size:10.5px;font-weight:800;letter-spacing:.06em;background:rgba(190,242,100,.13);border:1px solid rgba(190,242,100,.4);color:var(--lime);padding:5px 10px;border-radius:var(--r-full)}
+  .btn-start-cam{width:100%;min-height:52px;padding:13px 20px;font-size:15px;font-weight:800;background:var(--success);border:1px solid var(--success);color:#fff;border-radius:var(--r-md);margin-top:12px}
+  .btn-start-cam:hover:not(:disabled){filter:brightness(1.07)}
+  .btn-start-cam.stop{background:var(--danger);border-color:var(--danger)}
+  .btn-start-cam:disabled{background:#e9eef4;border-color:var(--border);color:#94a3b8}
+  .cam-controls{display:flex;gap:8px;margin-top:10px}
+  .btn-ctrl{flex:1;min-width:0;min-height:48px;padding:10px 12px;font-size:12.5px;font-weight:700;background:#fff;color:var(--ink);border:1.5px solid var(--border-strong);border-radius:var(--r-md)}
+  .btn-ctrl:hover:not(:disabled){background:var(--surface-2)}
+  .btn-ctrl:disabled{background:var(--surface-2);border-color:var(--border);color:#9db0c7;opacity:.8}
+  .btn-ctrl.on{background:var(--warning-bg);border-color:var(--warning-border);color:#92400e}
+
+  /* ===== Toast-like banners ===== */
+  @keyframes toastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .ok-banner{min-height:0;font-size:13px;font-weight:700;text-align:left;margin-top:10px;display:flex;align-items:flex-start;justify-content:flex-start;gap:8px;line-height:1.55}
+  .ok-banner:empty{display:none;margin:0}
+  .ok-banner:not(:empty){background:var(--success-bg);border:1px solid var(--success-border);border-left:4px solid var(--success);color:var(--success-ink);border-radius:var(--r-md);padding:11px 12px;box-shadow:var(--shadow-pop);animation:toastIn .22s ease}
+  .ok-banner svg{flex-shrink:0;margin-top:2px}
+  #errbox{display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-left:4px solid var(--danger);color:#7f1d1d;font-size:12.5px;font-weight:500;border-radius:var(--r-md);padding:12px;line-height:1.6;margin-top:12px;box-shadow:var(--shadow-pop);animation:toastIn .22s ease}
+
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:12px 2px 0;border-top:1px solid var(--border);cursor:pointer;min-height:48px}
+  .toggle-row-left{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-2);font-weight:600;line-height:1.5}
+  .toggle-row-left svg{flex-shrink:0}
+  .custom-switch{position:relative;width:48px;height:28px;flex-shrink:0}
+  .custom-switch input{opacity:0;width:100%;height:100%;position:absolute;inset:0;margin:0;cursor:pointer;z-index:2}
+  .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#cbd5e1;transition:background .2s ease;border-radius:99px}
+  .slider:before{position:absolute;content:"";height:22px;width:22px;left:3px;bottom:3px;background-color:#fff;transition:transform .2s ease;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  input:checked + .slider{background:var(--success)}
+  input:checked + .slider:before{transform:translateX(20px)}
+  input:focus-visible + .slider{outline:3px solid var(--primary);outline-offset:2px}
+
+  /* ===== Step 3 ===== */
+  .manual-wrap{display:flex;gap:8px}
+  #manual{flex:1;min-width:0;min-height:50px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--r-md);padding:11px 14px;color:var(--ink);font-size:16px;transition:border-color .15s ease,box-shadow .15s ease}
+  #manual::placeholder{color:#94a3b8;font-size:14px}
+  #manual:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(29,78,216,.14);outline:none}
+  #btnSend{min-height:50px;padding:11px 18px;background:var(--primary);border:1px solid var(--primary);color:#fff;font-weight:800;font-size:13.5px;border-radius:var(--r-md);box-shadow:var(--shadow-btn);flex-shrink:0}
+  #btnSend:hover:not(:disabled){background:var(--primary-pressed);border-color:var(--primary-pressed)}
+  #btnSend:disabled{background:#e9eef4;border-color:var(--border);color:#94a3b8}
+  .mini-hint{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55}
+
+  /* ===== Step 4 ===== */
+  .hist-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+  .hist-top-label{font-size:11px;color:var(--muted);font-weight:700}
+  .hist-badges{display:flex;gap:6px;align-items:center;flex-shrink:0}
+  .hist-cnt-badge{font-size:11px;font-weight:800;background:var(--success-bg);color:var(--success-ink);border:1px solid var(--success-border);padding:5px 10px;border-radius:var(--r-full);white-space:nowrap;min-height:28px;display:inline-flex;align-items:center}
+  .hist-actions{display:flex;gap:8px;margin-bottom:10px}
+  .hist-actions .btn-ctrl{font-size:12px}
+  .hist{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+  .hist div:not(.hist-empty){background:var(--surface-2);border:1px solid var(--border);padding:10px 12px;border-radius:var(--r-sm);display:flex;justify-content:space-between;align-items:center;gap:10px;animation:histIn .18s ease}
+  @keyframes histIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .hist .code-txt{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink);word-break:break-all;min-width:0}
+  .hist small{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--success-ink);white-space:nowrap;background:#fff;border:1px solid var(--success-border);padding:3px 8px;border-radius:var(--r-full)}
+  .hist-empty{text-align:center;color:var(--muted);font-size:12px;padding:24px 16px;border:1.5px dashed var(--border-strong);border-radius:var(--r-md);background:var(--surface-2);display:flex;flex-direction:column;align-items:center;gap:8px;line-height:1.55}
+  /* Cadangan ikon bila JS me-render versi teks polos */
+  .hist-empty::before{content:"";width:44px;height:44px;border-radius:14px;background:#fff;border:1px solid var(--border);box-shadow:0 2px 8px rgba(15,23,42,.06);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.8'%3E%3Cline x1='4' y1='6' x2='4' y2='18'/%3E%3Cline x1='8' y1='6' x2='8' y2='18'/%3E%3Cline x1='11' y1='6' x2='11' y2='18' stroke-width='3'/%3E%3Cline x1='15' y1='6' x2='15' y2='18'/%3E%3Cline x1='19' y1='6' x2='19' y2='18'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;background-size:22px}
+  .hist-empty:has(.empty-icon)::before{display:none}
+  .hist-empty .empty-icon{width:48px;height:48px;border-radius:16px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,.06)}
+  .hist-empty .empty-icon svg{width:24px;height:24px;stroke:#94a3b8;fill:none;stroke-width:1.8}
+  .hist-empty strong{display:block;font-size:13px;color:var(--ink-2)}
+  .hist-empty span.desc{font-size:11.5px;line-height:1.55}
+  .foot{text-align:center;font-size:10.5px;color:#94a3b8;padding:6px 0 4px;font-weight:500}
+
+  @media (max-width:360px){
+    .wrap{padding:10px 10px 8px;gap:10px}
+    .card{padding:14px 12px}
+    header{padding-left:10px;padding-right:10px}
+    #code{font-size:22px;letter-spacing:6px;text-indent:6px}
+    #code::placeholder{letter-spacing:6px}
+    .viewfinder-wrap{min-height:220px}
+    .pair-scanner-box{min-height:190px}
+    .cam-controls{gap:6px}
+    .cam-controls .btn-ctrl{font-size:11.5px;padding:10px 8px}
+    .hist-actions .btn-ctrl{font-size:11.5px}
+    .manual-wrap{gap:6px}
+    #btnSend{padding:11px 14px}
+    .brand-txt p{display:none}
+    .vf-placeholder{padding:22px 16px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .laser-line.active{transform:translateY(0)}
   }
 </style>
 </head>
@@ -829,14 +249,14 @@
 <header>
   <div class="header-top">
     <div class="brand">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="12" y1="7" x2="12" y2="17"/></svg>
+      <div class="brand-icon" aria-hidden="true">
+        <img src="/logo.png" alt="" loading="lazy" decoding="async">
       </div>
-      <div>
-        <h1>HP SCANNER <span class="tag">HP</span></h1>
+      <div class="brand-txt">
+        <h1>SCANKILAT <span class="tag">HP</span></h1>
+        <p>Scanner HP • cepat &amp; satu tangan</p>
       </div>
     </div>
-
     <div class="status-pill" id="statusPill">
       <span class="status-dot"></span>
       <span id="status">Belum terhubung</span>
@@ -844,21 +264,20 @@
   </div>
 </header>
 
-<div class="flash" id="flash"></div>
-
 <div class="wrap">
-  <!-- Step 1: Session Connection -->
-  <div class="card" id="sessionCard">
-    <div class="card-header">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Sambungkan ke Laptop</span>
+  <!-- Langkah 1: Koneksi sesi -->
+  <section class="card" id="sessionCard" aria-labelledby="t-step1">
+    <div class="step-head">
+      <span class="step-num" aria-hidden="true">1</span>
+      <div class="step-txt">
+        <span class="step-kicker">Langkah 1 dari 4</span>
+        <h2 id="t-step1">Sambungkan ke Laptop</h2>
+        <p>Pairing sekali saja — selanjutnya otomatis tersambung.</p>
       </div>
     </div>
 
-    <!-- Tombol Scan QR dari Aplikasi EXE Laptop -->
     <button type="button" class="btn-scan-qr" id="btnScanQrExe">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" focusable="false">
         <rect x="3" y="3" width="7" height="7" rx="1"/>
         <rect x="14" y="3" width="7" height="7" rx="1"/>
         <rect x="14" y="14" width="7" height="7" rx="1"/>
@@ -874,10 +293,9 @@
       Arahkan kamera ke QR Code aplikasi Barcode2Scanner di laptop
     </div>
 
-    <!-- Viewfinder Khusus Scan QR Pairing (Hidden by default) -->
     <div class="pair-viewfinder-wrap" id="pairViewfinder" style="display: none;">
       <div class="pair-viewfinder-header">
-        <span>📷 Arahkan Kamera ke QR Code Laptop:</span>
+        <span>Arahkan kamera ke QR laptop</span>
         <button type="button" class="btn-close-pair" id="btnClosePair">✕ Tutup</button>
       </div>
       <div class="pair-scanner-box">
@@ -887,65 +305,66 @@
       <div class="pair-tip">Posisikan QR Code di dalam kotak</div>
     </div>
 
-    <div class="divider-or">
-      <span>ATAU MASUKKAN MANUAL</span>
+    <div class="divider-or" aria-hidden="true">
+      <span>ATAU KODE MANUAL</span>
     </div>
 
     <div class="code-input-box">
-      <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="------" autocomplete="off">
+      <label class="field-label" for="code">Kode sesi 6 digit</label>
+      <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="––––––" autocomplete="off" aria-describedby="hintAuth">
     </div>
 
-    <!-- Locked Readonly Device Type Badge -->
     <div class="device-field-wrap">
       <div class="device-field-label">
-        <span>Jenis Perangkat:</span>
-        <span class="detect-hint">🔒 Terdeteksi Otomatis</span>
+        <span>Jenis perangkat</span>
+        <span class="detect-hint">Terdeteksi otomatis</span>
       </div>
       <div class="device-info-badge">
-        <svg class="icon-dev" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <svg class="icon-dev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
         <span id="deviceDisplayName">Mendeteksi perangkat...</span>
       </div>
     </div>
 
     <button class="btn-primary" id="btnConn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       <span>Hubungkan ke Laptop</span>
     </button>
-    
-    <div class="hint-sub" id="hintAuth">
-      💡 Masukkan kode 6 digit atau scan QR dari layar laptop.
-    </div>
-  </div>
 
-  <!-- Collapsed Connected Session Bar -->
+    <div class="hint-sub" id="hintAuth">
+      Masukkan kode 6 digit atau scan QR dari layar laptop.
+    </div>
+  </section>
+
+  <!-- Banner sesi tersambung -->
   <div class="session-connected-bar" id="sessionActiveBar">
     <div class="scb-left">
       <div class="scb-top">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" aria-hidden="true" focusable="false"><polyline points="20 6 9 17 4 12"/></svg>
         <span>Sesi:</span>
         <span class="scb-code" id="activeCodeDisplay">------</span>
       </div>
       <div class="scb-device">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
         <span id="activeDeviceDisplay">Smartphone</span>
       </div>
     </div>
     <button class="scb-btn" id="btnChangeSession">Ganti Sesi</button>
   </div>
 
-  <!-- Step 2: Camera Scanner -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <span>Kamera Scanner</span>
+  <!-- Langkah 2: Kamera -->
+  <section class="card" aria-labelledby="t-step2">
+    <div class="step-head">
+      <span class="step-num" aria-hidden="true">2</span>
+      <div class="step-txt">
+        <span class="step-kicker">Langkah 2 dari 4</span>
+        <h2 id="t-step2">Kamera Scanner</h2>
+        <p>Arahkan ke barcode — hasil langsung terkirim ke laptop.</p>
       </div>
     </div>
 
-    <!-- Viewfinder -->
     <div class="viewfinder-wrap">
       <div class="laser-line" id="laserLine"></div>
-      <div class="vf-corners">
+      <div class="vf-corners" aria-hidden="true">
         <div class="vf-c vf-tl"></div>
         <div class="vf-c vf-tr"></div>
         <div class="vf-c vf-bl"></div>
@@ -953,37 +372,38 @@
       </div>
       <div id="reader"></div>
       <div class="vf-placeholder" id="vfPlaceholder">
-        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <p>Hubungkan ke laptop lalu klik<br><strong>"Nyalakan Kamera"</strong></p>
+        <div class="vf-icon-ring">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <p>Hubungkan ke laptop lalu ketuk<br><strong>“Nyalakan Kamera”</strong></p>
+        <span class="vf-chip">KAMERA SIAP DIPAKAI</span>
       </div>
     </div>
 
-    <!-- Camera Activation Button -->
-    <button class="btn-start-cam" id="btnCam" disabled>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    <button class="btn-start-cam" id="btnCam" disabled aria-describedby="camStateHint">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" focusable="false"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       <span id="camBtnText">Nyalakan Kamera</span>
     </button>
+    <div class="hint-sub" id="camStateHint" role="status">Kamera mati. Nyalakan untuk mulai memindai.</div>
 
-    <!-- Camera Controls -->
     <div class="cam-controls">
       <button class="btn-ctrl" id="btnTorch" disabled>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span id="torchTxt">Senter / Flash</span>
       </button>
       <button class="btn-ctrl" id="btnSwitch" disabled>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
         <span>Ganti Kamera</span>
       </button>
     </div>
 
-    <div class="ok-banner" id="ok"></div>
+    <div class="ok-banner" id="ok" role="status" aria-live="polite"></div>
 
-    <div id="errbox"></div>
+    <div id="errbox" role="alert"></div>
 
-    <!-- Continuous scan option -->
     <label class="toggle-row" for="optCont">
       <div class="toggle-row-left">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" aria-hidden="true" focusable="false"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         <span>Scan beruntun otomatis (tanpa henti)</span>
       </div>
       <div class="custom-switch">
@@ -991,42 +411,76 @@
         <span class="slider"></span>
       </div>
     </label>
-  </div>
+  </section>
 
-  <!-- Step 3: Manual Entry -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="8" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16" y1="12" x2="16" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/></svg>
-        <span>Ketik Manual (Barcode Rusak)</span>
+  <!-- Langkah 3: Manual -->
+  <section class="card" aria-labelledby="t-step3">
+    <div class="step-head">
+      <span class="step-num" aria-hidden="true">3</span>
+      <div class="step-txt">
+        <span class="step-kicker">Langkah 3 dari 4</span>
+        <h2 id="t-step3">Ketik Manual</h2>
+        <p>Solusi saat barcode rusak, sobek, atau buram.</p>
       </div>
     </div>
 
     <div class="manual-wrap">
-      <input id="manual" placeholder="Ketik kode barcode...">
+      <label class="sr-only" for="manual">Ketik manual barcode rusak</label>
+      <input id="manual" placeholder="Ketik kode barcode..." autocomplete="off" enterkeyhint="send">
       <button id="btnSend" disabled>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true" focusable="false"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         <span>Kirim</span>
       </button>
     </div>
-  </div>
+    <div class="mini-hint">Tekan Enter untuk kirim cepat. Cocok untuk kode yang tak terbaca kamera.</div>
+  </section>
 
-  <!-- Step 4: History -->
-  <div class="card">
-    <div class="hist-header">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>Terkirim ke Laptop</span>
-      </div>
-      <div class="hist-cnt-badge">
-        <span id="cnt">0</span> tersinkron
+  <!-- Langkah 4: Riwayat -->
+  <section class="card" aria-labelledby="t-step4">
+    <div class="step-head" style="margin-bottom:10px">
+      <span class="step-num" aria-hidden="true">4</span>
+      <div class="step-txt" style="flex:1">
+        <span class="step-kicker">Langkah 4 dari 4</span>
+        <h2 id="t-step4">Terkirim ke Laptop</h2>
+        <p>Semua hasil tersimpan otomatis di HP ini.</p>
       </div>
     </div>
+    <div class="hist-top">
+      <div class="hist-top-label">Riwayat pengiriman</div>
+      <div class="hist-badges">
+        <div class="hist-cnt-badge" id="offlineBadge" style="display:none;background:#fef3c7;border-color:#fcd34d;color:#92400e">
+          <span>0 offline</span>
+        </div>
+        <div class="hist-cnt-badge">
+          <span id="cnt">0</span>&nbsp;tersinkron
+        </div>
+      </div>
+    </div>
+
+    <div class="hist-actions">
+      <button class="btn-ctrl" id="btnSync" disabled>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <span>Sync Offline</span>
+      </button>
+      <button class="btn-ctrl" id="btnClearHist" aria-describedby="histClearHint">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        <span>Hapus Riwayat</span>
+      </button>
+    </div>
+    <div class="hint-sub" id="histClearHint" style="margin:0 0 10px">Menghapus hanya membersihkan HP ini — data yang sudah masuk laptop tetap aman.</div>
 
     <div class="hist" id="hist">
-      <div class="hist-empty" id="histEmpty">Belum ada barcode yang dikirim</div>
+      <div class="hist-empty" id="histEmpty">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><line x1="4" y1="6" x2="4" y2="18"/><line x1="8" y1="6" x2="8" y2="18"/><line x1="11" y1="6" x2="11" y2="18" stroke-width="3"/><line x1="15" y1="6" x2="15" y2="18"/><line x1="19" y1="6" x2="19" y2="18"/></svg>
+        </div>
+        <strong>Belum ada barcode terkirim</strong>
+        <span class="desc">Nyalakan kamera dan arahkan ke barcode.<br>Hasil akan muncul di sini otomatis.</span>
+      </div>
     </div>
-  </div>
+  </section>
+
+  <div class="foot">ScanKilat • Koneksi aman terenkripsi • Optimal satu tangan</div>
 </div>
 
 <script src="/vendor/html5-qrcode.min.js"></script>

@@ -27,6 +27,7 @@ Partial Class Form1
     Friend WithEvents lblIp As System.Windows.Forms.Label
     Friend WithEvents cmbNetworkIP As System.Windows.Forms.ComboBox
     Friend WithEvents lblSessionCode As System.Windows.Forms.Label
+    Friend WithEvents btnToggleQR As System.Windows.Forms.Button
     Friend WithEvents picQRCode As System.Windows.Forms.PictureBox
     Friend WithEvents lnkUrl As System.Windows.Forms.LinkLabel
     Friend WithEvents btnNewSession As System.Windows.Forms.Button
@@ -68,6 +69,10 @@ Partial Class Form1
     Friend WithEvents btnCopy As System.Windows.Forms.Button
     Friend WithEvents btnExportCsv As System.Windows.Forms.Button
     Friend WithEvents btnClear As System.Windows.Forms.Button
+    Friend WithEvents btnRealTime As System.Windows.Forms.Button
+    Friend WithEvents btnSheets As System.Windows.Forms.Button
+    Friend WithEvents lblOutputPath As System.Windows.Forms.Label
+    Friend WithEvents lblSheetsStatus As System.Windows.Forms.Label
     Friend WithEvents lblLog As System.Windows.Forms.Label
 
     <System.Diagnostics.DebuggerStepThrough()> _
@@ -88,6 +93,7 @@ Partial Class Form1
         Me.lblIp = New System.Windows.Forms.Label()
         Me.cmbNetworkIP = New System.Windows.Forms.ComboBox()
         Me.lblSessionCode = New System.Windows.Forms.Label()
+        Me.btnToggleQR = New System.Windows.Forms.Button()
         Me.picQRCode = New System.Windows.Forms.PictureBox()
         Me.lnkUrl = New System.Windows.Forms.LinkLabel()
         Me.btnNewSession = New System.Windows.Forms.Button()
@@ -129,6 +135,10 @@ Partial Class Form1
         Me.btnCopy = New System.Windows.Forms.Button()
         Me.btnExportCsv = New System.Windows.Forms.Button()
         Me.btnClear = New System.Windows.Forms.Button()
+        Me.btnRealTime = New System.Windows.Forms.Button()
+        Me.btnSheets = New System.Windows.Forms.Button()
+        Me.lblOutputPath = New System.Windows.Forms.Label()
+        Me.lblSheetsStatus = New System.Windows.Forms.Label()
         Me.lblLog = New System.Windows.Forms.Label()
 
         Me.pnlHeader.SuspendLayout()
@@ -170,7 +180,7 @@ Partial Class Form1
         Me.lblTitle.Name = "lblTitle"
         Me.lblTitle.Size = New System.Drawing.Size(270, 25)
         Me.lblTitle.TabIndex = 0
-        Me.lblTitle.Text = "BARCODE 2 SCANNER PRO"
+        Me.lblTitle.Text = "⚡ SCANKILAT PRO"
 
         '
         ' lblSubtitle
@@ -238,6 +248,7 @@ Partial Class Form1
         Me.cardQR.Controls.Add(Me.lblIp)
         Me.cardQR.Controls.Add(Me.cmbNetworkIP)
         Me.cardQR.Controls.Add(Me.lblSessionCode)
+        Me.cardQR.Controls.Add(Me.btnToggleQR)
         Me.cardQR.Controls.Add(Me.picQRCode)
         Me.cardQR.Controls.Add(Me.lnkUrl)
         Me.cardQR.Controls.Add(Me.btnNewSession)
@@ -246,7 +257,7 @@ Partial Class Form1
         Me.cardQR.Location = New System.Drawing.Point(12, 12)
         Me.cardQR.Name = "cardQR"
         Me.cardQR.Padding = New System.Windows.Forms.Padding(12)
-        Me.cardQR.Size = New System.Drawing.Size(316, 368)
+        Me.cardQR.Size = New System.Drawing.Size(316, 181)
         Me.cardQR.TabIndex = 0
 
         '
@@ -298,20 +309,37 @@ Partial Class Form1
         Me.lblSessionCode.Name = "lblSessionCode"
         Me.lblSessionCode.Size = New System.Drawing.Size(290, 26)
         Me.lblSessionCode.TabIndex = 3
-        Me.lblSessionCode.Text = "SESI: ......"
+        Me.lblSessionCode.Text = "KODE SESI: ••••••"
         Me.lblSessionCode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+
+        '
+        ' btnToggleQR
+        '
+        Me.btnToggleQR.BackColor = System.Drawing.Color.FromArgb(99, 102, 241)
+        Me.btnToggleQR.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.btnToggleQR.FlatAppearance.BorderSize = 0
+        Me.btnToggleQR.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnToggleQR.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnToggleQR.ForeColor = System.Drawing.Color.White
+        Me.btnToggleQR.Location = New System.Drawing.Point(12, 99)
+        Me.btnToggleQR.Name = "btnToggleQR"
+        Me.btnToggleQR.Size = New System.Drawing.Size(290, 32)
+        Me.btnToggleQR.TabIndex = 4
+        Me.btnToggleQR.Text = "👁 Tampilkan QR untuk Scan"
+        Me.btnToggleQR.UseVisualStyleBackColor = False
 
         '
         ' picQRCode
         '
         Me.picQRCode.BackColor = System.Drawing.Color.White
         Me.picQRCode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.picQRCode.Location = New System.Drawing.Point(70, 99)
+        Me.picQRCode.Location = New System.Drawing.Point(70, 137)
         Me.picQRCode.Name = "picQRCode"
         Me.picQRCode.Size = New System.Drawing.Size(175, 175)
         Me.picQRCode.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom
-        Me.picQRCode.TabIndex = 4
+        Me.picQRCode.TabIndex = 5
         Me.picQRCode.TabStop = False
+        Me.picQRCode.Visible = False
 
         '
         ' lnkUrl
@@ -319,13 +347,14 @@ Partial Class Form1
         Me.lnkUrl.ActiveLinkColor = System.Drawing.Color.FromArgb(165, 180, 252)
         Me.lnkUrl.Font = New System.Drawing.Font("Segoe UI", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lnkUrl.LinkColor = System.Drawing.Color.FromArgb(129, 140, 248)
-        Me.lnkUrl.Location = New System.Drawing.Point(12, 277)
+        Me.lnkUrl.Location = New System.Drawing.Point(12, 315)
         Me.lnkUrl.Name = "lnkUrl"
         Me.lnkUrl.Size = New System.Drawing.Size(290, 16)
-        Me.lnkUrl.TabIndex = 5
+        Me.lnkUrl.TabIndex = 6
         Me.lnkUrl.TabStop = True
         Me.lnkUrl.Text = "Salin URL Manual ke Clipboard"
         Me.lnkUrl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.lnkUrl.Visible = False
 
         '
         ' btnNewSession
@@ -336,10 +365,10 @@ Partial Class Form1
         Me.btnNewSession.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.btnNewSession.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnNewSession.ForeColor = System.Drawing.Color.White
-        Me.btnNewSession.Location = New System.Drawing.Point(12, 298)
+        Me.btnNewSession.Location = New System.Drawing.Point(12, 336)
         Me.btnNewSession.Name = "btnNewSession"
         Me.btnNewSession.Size = New System.Drawing.Size(140, 28)
-        Me.btnNewSession.TabIndex = 6
+        Me.btnNewSession.TabIndex = 7
         Me.btnNewSession.Text = "🔄 Sesi Baru"
         Me.btnNewSession.UseVisualStyleBackColor = False
 
@@ -352,10 +381,10 @@ Partial Class Form1
         Me.btnFirewall.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.btnFirewall.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.btnFirewall.ForeColor = System.Drawing.Color.White
-        Me.btnFirewall.Location = New System.Drawing.Point(160, 298)
+        Me.btnFirewall.Location = New System.Drawing.Point(160, 336)
         Me.btnFirewall.Name = "btnFirewall"
         Me.btnFirewall.Size = New System.Drawing.Size(142, 28)
-        Me.btnFirewall.TabIndex = 7
+        Me.btnFirewall.TabIndex = 8
         Me.btnFirewall.Text = "🛡 Buka Firewall"
         Me.btnFirewall.UseVisualStyleBackColor = False
 
@@ -393,8 +422,8 @@ Partial Class Form1
         ' chkAutoType
         '
         Me.chkAutoType.AutoSize = True
-        Me.chkAutoType.Checked = True
-        Me.chkAutoType.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.chkAutoType.Checked = False
+        Me.chkAutoType.CheckState = System.Windows.Forms.CheckState.Unchecked
         Me.chkAutoType.Cursor = System.Windows.Forms.Cursors.Hand
         Me.chkAutoType.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.chkAutoType.ForeColor = System.Drawing.Color.FromArgb(52, 211, 153)
@@ -726,11 +755,15 @@ Partial Class Form1
         Me.pnlBottom.Controls.Add(Me.btnCopy)
         Me.pnlBottom.Controls.Add(Me.btnExportCsv)
         Me.pnlBottom.Controls.Add(Me.btnClear)
+        Me.pnlBottom.Controls.Add(Me.btnRealTime)
+        Me.pnlBottom.Controls.Add(Me.btnSheets)
+        Me.pnlBottom.Controls.Add(Me.lblOutputPath)
+        Me.pnlBottom.Controls.Add(Me.lblSheetsStatus)
         Me.pnlBottom.Controls.Add(Me.lblLog)
         Me.pnlBottom.Dock = System.Windows.Forms.DockStyle.Bottom
-        Me.pnlBottom.Location = New System.Drawing.Point(0, 535)
+        Me.pnlBottom.Location = New System.Drawing.Point(0, 510)
         Me.pnlBottom.Name = "pnlBottom"
-        Me.pnlBottom.Size = New System.Drawing.Size(668, 45)
+        Me.pnlBottom.Size = New System.Drawing.Size(668, 70)
         Me.pnlBottom.TabIndex = 2
 
         '
@@ -782,6 +815,62 @@ Partial Class Form1
         Me.btnClear.UseVisualStyleBackColor = False
 
         '
+        ' btnRealTime
+        '
+        Me.btnRealTime.BackColor = System.Drawing.Color.FromArgb(5, 150, 105)
+        Me.btnRealTime.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.btnRealTime.FlatAppearance.BorderSize = 0
+        Me.btnRealTime.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnRealTime.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnRealTime.ForeColor = System.Drawing.Color.White
+        Me.btnRealTime.Location = New System.Drawing.Point(410, 10)
+        Me.btnRealTime.Name = "btnRealTime"
+        Me.btnRealTime.Size = New System.Drawing.Size(120, 30)
+        Me.btnRealTime.TabIndex = 3
+        Me.btnRealTime.Text = "▶ Real-Time: OFF"
+        Me.btnRealTime.UseVisualStyleBackColor = False
+
+        '
+        ' btnSheets
+        '
+        Me.btnSheets.BackColor = System.Drawing.Color.FromArgb(51, 65, 85)
+        Me.btnSheets.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.btnSheets.FlatAppearance.BorderSize = 0
+        Me.btnSheets.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnSheets.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnSheets.ForeColor = System.Drawing.Color.White
+        Me.btnSheets.Location = New System.Drawing.Point(540, 10)
+        Me.btnSheets.Name = "btnSheets"
+        Me.btnSheets.Size = New System.Drawing.Size(120, 30)
+        Me.btnSheets.TabIndex = 4
+        Me.btnSheets.Text = "📊 Sheets Setup"
+        Me.btnSheets.UseVisualStyleBackColor = False
+
+        '
+        ' lblOutputPath
+        '
+        Me.lblOutputPath.AutoEllipsis = True
+        Me.lblOutputPath.Font = New System.Drawing.Font("Segoe UI", 7.5!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblOutputPath.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184)
+        Me.lblOutputPath.Location = New System.Drawing.Point(410, 42)
+        Me.lblOutputPath.Name = "lblOutputPath"
+        Me.lblOutputPath.Size = New System.Drawing.Size(150, 14)
+        Me.lblOutputPath.TabIndex = 5
+        Me.lblOutputPath.Text = "Real-time: mati"
+
+        '
+        ' lblSheetsStatus
+        '
+        Me.lblSheetsStatus.AutoEllipsis = True
+        Me.lblSheetsStatus.Font = New System.Drawing.Font("Segoe UI", 7.5!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.lblSheetsStatus.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184)
+        Me.lblSheetsStatus.Location = New System.Drawing.Point(565, 42)
+        Me.lblSheetsStatus.Name = "lblSheetsStatus"
+        Me.lblSheetsStatus.Size = New System.Drawing.Size(95, 14)
+        Me.lblSheetsStatus.TabIndex = 6
+        Me.lblSheetsStatus.Text = "Sheets: OFF"
+
+        '
         ' lblLog
         '
         Me.lblLog.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
@@ -789,12 +878,12 @@ Partial Class Form1
         Me.lblLog.AutoEllipsis = True
         Me.lblLog.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblLog.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184)
-        Me.lblLog.Location = New System.Drawing.Point(410, 16)
+        Me.lblLog.Location = New System.Drawing.Point(0, 56)
         Me.lblLog.Name = "lblLog"
-        Me.lblLog.Size = New System.Drawing.Size(250, 20)
-        Me.lblLog.TabIndex = 3
+        Me.lblLog.Size = New System.Drawing.Size(660, 14)
+        Me.lblLog.TabIndex = 7
         Me.lblLog.Text = "Siap menerima scan..."
-        Me.lblLog.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        Me.lblLog.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
 
         '
         ' Form1
@@ -810,7 +899,7 @@ Partial Class Form1
         Me.MinimumSize = New System.Drawing.Size(950, 620)
         Me.Name = "Form1"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Barcode 2 Scanner Pro — Wireless Server & Keystroke Auto-Typer"
+        Me.Text = "ScanKilat Pro — Wireless Server & Keystroke Auto-Typer"
         Me.pnlHeader.ResumeLayout(False)
         Me.pnlHeader.PerformLayout()
         Me.pnlLeft.ResumeLayout(False)

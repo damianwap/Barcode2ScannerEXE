@@ -14,5 +14,22 @@ obj/
 *.pem
 *.cer
 *.crt
-SECURITY_AUDIT.md
-!vendor/*.js
+
+# OS leftovers
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ScanKilat generated outputs (real-time & export, jangan di-commit)
+Barcode_Live_*.csv
+Barcode_Live_*.xml
+Barcode_Scan_*.csv
+hasil-scan-*.csv
+*.orig
+*.rej
+
+# Local cert thumbprint copy (jika pernah tersalin ke repo)
+cert-thumbprint.txt
+
+# CommandCode generated design reports (agent tetap di-commit)
+.commandcode/design/

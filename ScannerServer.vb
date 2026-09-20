@@ -21,13 +21,23 @@ Public Class ScannerServer
     Private _publicDir As String
     Private _activePhones As New ConcurrentDictionary(Of String, ConnectedDeviceInfo)()
     Private _activeConnections As Integer = 0
+    Private _connectedClients As New ConcurrentDictionary(Of String, TcpClient)()
+    Private _sessionGeneration As Integer = 0
+    Private _sessionCreatedAtUtc As DateTime = DateTime.UtcNow
+    Private Const SessionMaxAgeHours As Integer = 24
+    Private Const MaxScanTextLength As Integer = 512
     Private _cleanupTimer As System.Threading.Timer = Nothing
     Private Const MaxConcurrentConnections As Integer = 30
+    Private Const MaxConnectionsPerIP As Integer = 5
+    Private Const MaxMessagesPerConnection As Integer = 200
+    Private _ipConnectionCounts As New ConcurrentDictionary(Of String, Integer)()
 
     Private Class IpRateLimitInfo
         Public Property FailedAttempts As Integer = 0
         Public Property BlockedUntil As DateTime = DateTime.MinValue
+        Public Property HandshakeTimes As New Queue(Of DateTime)()
     End Class
+    Private Const MaxHandshakesPerMinutePerIP As Integer = 10
     Private _ipRateLimits As New ConcurrentDictionary(Of String, IpRateLimitInfo)()
 
     Public Event PhoneConnected(deviceName As String)
@@ -118,7 +128,41 @@ Public Class ScannerServer
             CurrentJoinKey = BitConverter.ToString(keyBuf).Replace("-", "").ToLowerInvariant()
         End Using
         _activePhones.Clear()
+        _sessionCreatedAtUtc = DateTime.UtcNow
+        Interlocked.Increment(_sessionGeneration)
+        ' Tendang semua socket lama: registrasi lama tidak boleh survive rotasi sesi.
+        ' Tanpa ini, HP yang sudah terautentikasi tetap bisa inject walau user klik "Sesi Baru".
+        For Each kvp In _connectedClients.ToArray()
+            Try
+                kvp.Value.Close()
+            Catch
+            End Try
+        Next
+        _connectedClients.Clear()
     End Sub
+
+    Public ReadOnly Property IsSessionExpired As Boolean
+        Get
+            Return (DateTime.UtcNow - _sessionCreatedAtUtc).TotalHours >= SessionMaxAgeHours
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' Validasi server-side untuk payload scan sebelum diteruskan ke Auto-Type.
+    ''' Menolak teks kosong, terlalu panjang, atau berisi karakter di luar allowlist barcode.
+    ''' </summary>
+    Public Shared Function SanitizeScanText(raw As String) As String
+        If String.IsNullOrEmpty(raw) Then Return ""
+        Const AllowedSymbols As String = " -._~:/?#[]@!$&'()*+,;=%"
+        Dim sb As New StringBuilder(Math.Min(raw.Length, MaxScanTextLength))
+        For Each c In raw
+            If Char.IsLetterOrDigit(c) OrElse AllowedSymbols.IndexOf(c) >= 0 Then
+                sb.Append(c)
+                If sb.Length >= MaxScanTextLength Then Exit For
+            End If
+        Next
+        Return sb.ToString()
+    End Function
 
     Private Sub SweepRateLimits(state As Object)
         Try
@@ -132,10 +176,22 @@ Public Class ScannerServer
                         ElseIf kvp.Value.FailedAttempts <= 0 Then
                             Dim removed As IpRateLimitInfo = Nothing
                             _ipRateLimits.TryRemove(kvp.Key, removed)
+                        ElseIf kvp.Value.BlockedUntil < now.AddHours(-1) Then
+                            ' Hapus entri basi (1-4 gagal, tidak aktif >1 jam) agar dictionary tidak tumbuh selamanya
+                            Dim stale As IpRateLimitInfo = Nothing
+                            _ipRateLimits.TryRemove(kvp.Key, stale)
                         End If
                     End If
                 End SyncLock
             Next
+            ' Rotasi sesi otomatis tiap 24 jam agar secret QR/URL tidak abadi
+            If (now - _sessionCreatedAtUtc).TotalHours >= SessionMaxAgeHours Then
+                Try
+                    GenerateNewSession()
+                    RaiseEvent ServerLog("Sesi dirotasi otomatis (kedaluwarsa 24 jam). HP harus scan QR ulang.")
+                Catch
+                End Try
+            End If
         Catch
         End Try
     End Sub
@@ -177,19 +233,30 @@ Public Class ScannerServer
         Dim deviceName As String = "HP"
         Dim isPhoneRegistered As Boolean = False
         Dim remoteEndpointStr As String = ""
+        Dim connId As String = Guid.NewGuid().ToString("N")
+        Dim myGeneration As Integer = _sessionGeneration
 
         Dim clientIp As String = "127.0.0.1"
         Dim failedAttemptsThisConn As Integer = 0
 
         Try
             remoteEndpointStr = client.Client.RemoteEndPoint.ToString()
+            _connectedClients(connId) = client
             Dim ipEndPoint = TryCast(client.Client.RemoteEndPoint, IPEndPoint)
             If ipEndPoint IsNot Nothing Then
                 clientIp = ipEndPoint.Address.ToString()
             End If
 
-            client.ReceiveTimeout = 60000
-            client.SendTimeout = 60000
+            ' KEAMANAN: Batasi jumlah koneksi per IP untuk mencegah DoS dari satu sumber
+            Dim currentIpCount = _ipConnectionCounts.AddOrUpdate(clientIp, 1, Function(k, v) v + 1)
+            If currentIpCount > MaxConnectionsPerIP Then
+                _ipConnectionCounts.AddOrUpdate(clientIp, 0, Function(k, v) Math.Max(0, v - 1))
+                client.Close()
+                Return
+            End If
+
+            client.ReceiveTimeout = 0
+            client.SendTimeout = 30000
 
             Dim netStream = client.GetStream()
 
@@ -217,6 +284,20 @@ Public Class ScannerServer
             Dim isWebSocket = requestHeader.IndexOf("Upgrade: websocket", StringComparison.OrdinalIgnoreCase) >= 0
 
             If isWebSocket Then
+                ' Batasi handshake per IP: tolak holding-DoS yang membanjiri koneksi idle.
+                Dim hsInfo = _ipRateLimits.GetOrAdd(clientIp, Function(k) New IpRateLimitInfo())
+                SyncLock hsInfo
+                    While hsInfo.HandshakeTimes.Count > 0 AndAlso
+                          (DateTime.UtcNow - hsInfo.HandshakeTimes.Peek()).TotalMinutes >= 1
+                        hsInfo.HandshakeTimes.Dequeue()
+                    End While
+                    hsInfo.HandshakeTimes.Enqueue(DateTime.UtcNow)
+                    If hsInfo.HandshakeTimes.Count > MaxHandshakesPerMinutePerIP Then
+                        client.Close()
+                        Return
+                    End If
+                End SyncLock
+
                 ' Cek apakah IP sedang diblokir sementara karena brute-force
                 Dim existingLimitInfo As IpRateLimitInfo = Nothing
                 If _ipRateLimits.TryGetValue(clientIp, existingLimitInfo) Then
@@ -260,21 +341,45 @@ Public Class ScannerServer
                 End If
 
                 Dim magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-                Dim sha1 = System.Security.Cryptography.SHA1.Create()
-                Dim acceptKey = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(wsKey.Trim() & magic)))
+                Dim acceptKey As String
+                Using sha1 = System.Security.Cryptography.SHA1.Create()
+                    acceptKey = Convert.ToBase64String(sha1.ComputeHash(Encoding.UTF8.GetBytes(wsKey.Trim() & magic)))
+                End Using
 
                 Dim responseHeader = "HTTP/1.1 101 Switching Protocols" & vbCrLf &
                                      "Upgrade: websocket" & vbCrLf &
                                      "Connection: Upgrade" & vbCrLf &
-                                     "Sec-WebSocket-Accept: " & acceptKey & vbCrLf & vbCrLf
+                                     "Sec-WebSocket-Accept: " & acceptKey & vbCrLf &
+                                     "X-Content-Type-Options: nosniff" & vbCrLf &
+                                     "Strict-Transport-Security: max-age=31536000" & vbCrLf & vbCrLf
                 Dim respBytes = Encoding.UTF8.GetBytes(responseHeader)
                 stream.Write(respBytes, 0, respBytes.Length)
                 stream.Flush()
 
                 ' Masuk ke pembacaan frame WebSocket
+                Dim messageCount As Integer = 0
+
                 While _isRunning AndAlso client.Connected
+                    ' Sesi dirotasi saat socket ini masih terbuka (tombol Sesi Baru / expiry):
+                    ' cabut otorisasi lama seketika agar tidak bisa inject pasca-rotasi.
+                    If myGeneration <> _sessionGeneration Then
+                        Try
+                            SendWebSocketText(stream, SerializeJson(New Dictionary(Of String, Object) From {
+                                {"type", "error"},
+                                {"message", "Sesi telah dirotasi. Scan QR ulang untuk menghubungkan."}}))
+                        Catch
+                        End Try
+                        Exit While
+                    End If
                     Dim frameText = ReadWebSocketFrame(stream)
                     If frameText Is Nothing Then Exit While
+
+                    ' KEAMANAN: Batasi jumlah pesan per koneksi untuk mencegah flooding
+                    messageCount += 1
+                    If messageCount > MaxMessagesPerConnection Then
+                        RaiseEvent ServerLog($"⚠️ Koneksi {clientIp} melebihi batas {MaxMessagesPerConnection} pesan — diputus.")
+                        Exit While
+                    End If
 
                     ' Parse JSON dengan parser sungguhan (bukan regex)
                     Dim msg = ParseJsonMessage(frameText)
@@ -282,6 +387,10 @@ Public Class ScannerServer
                     Dim msgType = GetJsonString(msg, "type")
 
                     If msgType = "register" Then
+                        If IsSessionExpired Then
+                            GenerateNewSession()
+                            myGeneration = _sessionGeneration
+                        End If
                         Dim session = GetJsonString(msg, "session")
                         Dim key = GetJsonString(msg, "key")
                         Dim name = GetJsonString(msg, "name")
@@ -293,11 +402,12 @@ Public Class ScannerServer
                         End If
 
                         ' Join key WAJIB: tanpa key autentikasi hanya kode 6 digit yang bisa brute-force
+                        ' KEAMANAN: Gunakan perbandingan constant-time untuk mencegah timing attack
                         Dim isKeyValid = Not String.IsNullOrEmpty(key) AndAlso
                                          Not String.IsNullOrEmpty(CurrentJoinKey) AndAlso
-                                         key.Equals(CurrentJoinKey, StringComparison.OrdinalIgnoreCase)
+                                         ConstantTimeEquals(key.ToUpperInvariant(), CurrentJoinKey.ToUpperInvariant())
 
-                        If session = CurrentSessionCode AndAlso isKeyValid Then
+                        If ConstantTimeEquals(session, CurrentSessionCode) AndAlso isKeyValid Then
                             isPhoneRegistered = True
                             Dim devInfo As New ConnectedDeviceInfo With {
                                 .Endpoint = remoteEndpointStr,
@@ -340,7 +450,9 @@ Public Class ScannerServer
                                 End If
                             End SyncLock
 
-                            ' Penalti delay untuk mencegah brute force berkecepatan tinggi
+                            ' Penalti delay untuk mencegah brute force berkecepatan tinggi.
+                            ' Thread.Sleep di sini aman: tiap koneksi punya thread sendiri dan
+                            ' MaxConnectionsPerIP=5 membatasi berapa slot yang bisa ditahan attacker.
                             Thread.Sleep(600)
 
                             If isBlocked Then
@@ -351,13 +463,10 @@ Public Class ScannerServer
                                 SendWebSocketText(stream, blockMsg)
                                 Exit While
                             Else
-                                Dim attemptsLeft = 0
-                                SyncLock info
-                                    attemptsLeft = Math.Max(0, 5 - info.FailedAttempts)
-                                End SyncLock
+                                ' Pesan generik: jangan bocorkan sisa percobaan (oracle untuk tuning brute-force).
                                 Dim errResponse = SerializeJson(New Dictionary(Of String, Object) From {
                                     {"type", "error"},
-                                    {"message", $"Kode sesi atau kunci koneksi tidak valid. Sisa percobaan: {attemptsLeft}"}})
+                                    {"message", "Kode sesi atau kunci koneksi tidak valid."}})
                                 SendWebSocketText(stream, errResponse)
                             End If
 
@@ -381,6 +490,14 @@ Public Class ScannerServer
                         Dim scanText = GetJsonString(msg, "text")
                         Dim scanFormat = GetJsonString(msg, "format")
                         If String.IsNullOrEmpty(scanFormat) Then scanFormat = "BARCODE"
+                        scanFormat = Regex.Replace(scanFormat, "[^\w\-\. ]", "").Trim()
+                        If scanFormat.Length > 32 Then scanFormat = scanFormat.Substring(0, 32)
+                        If String.IsNullOrEmpty(scanFormat) Then scanFormat = "BARCODE"
+                        If String.IsNullOrEmpty(scanText) Then Continue While
+                        ' Enforce server-side: tolak payload >512 char atau tanpa char valid.
+                        ' Tanpa ini, validasi hanya di Form1 (client-side) dan Auto-Type bisa
+                        ' disalahgunakan untuk mengetik perintah ke jendela aktif.
+                        scanText = SanitizeScanText(scanText)
                         If String.IsNullOrEmpty(scanText) Then Continue While
 
                         SendWebSocketText(stream, "{""type"":""ack""}")
@@ -426,11 +543,19 @@ Public Class ScannerServer
                     If localPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase) Then contentType = "application/javascript; charset=utf-8"
                     If localPath.EndsWith(".css", StringComparison.OrdinalIgnoreCase) Then contentType = "text/css; charset=utf-8"
                     If localPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase) Then contentType = "application/json"
+                    ' Secret sesi/joinKey hanya ada di query string, tapi HTML tidak boleh
+                    ' dicache agar tidak tersimpan di disk HP/browser. JS/vendor boleh dicache.
+                    Dim cacheControl = "Cache-Control: no-store" & vbCrLf
+                    If Not contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) Then
+                        cacheControl = "Cache-Control: public, max-age=86400" & vbCrLf
+                    End If
 
                     Dim httpHeader = $"HTTP/1.1 200 OK" & vbCrLf &
                                      $"Content-Type: {contentType}" & vbCrLf &
                                      $"Content-Length: {contentBytes.Length}" & vbCrLf &
                                      $"Connection: close" & vbCrLf &
+                                     cacheControl &
+                                     $"Strict-Transport-Security: max-age=31536000" & vbCrLf &
                                      $"X-Content-Type-Options: nosniff" & vbCrLf &
                                      $"X-Frame-Options: SAMEORIGIN" & vbCrLf &
                                      $"Referrer-Policy: no-referrer" & vbCrLf &
@@ -454,6 +579,8 @@ Public Class ScannerServer
         Catch ex As Exception
             RaiseEvent ServerLog($"[Server Error] {ex.Message}")
         Finally
+            Dim removedClient As TcpClient = Nothing
+            _connectedClients.TryRemove(connId, removedClient)
             If isPhoneRegistered AndAlso Not String.IsNullOrEmpty(remoteEndpointStr) Then
                 Dim removedDevice As ConnectedDeviceInfo = Nothing
                 _activePhones.TryRemove(remoteEndpointStr, removedDevice)
@@ -464,6 +591,8 @@ Public Class ScannerServer
                 client.Close()
             Catch
             End Try
+            ' Kurangi hitungan koneksi per IP
+            _ipConnectionCounts.AddOrUpdate(clientIp, 0, Function(k, v) Math.Max(0, v - 1))
             Interlocked.Decrement(_activeConnections)
         End Try
     End Sub
@@ -486,27 +615,25 @@ Public Class ScannerServer
     End Function
 
     Private Function ReadHttpHeader(stream As Stream) As String
-        Dim ms As New MemoryStream()
-        Dim prevB As Integer = -1
-        Dim b As Integer = 0
+        Dim buf As New List(Of Byte)(8192)
         Dim count As Integer = 0
 
         While count < 8192
-            b = stream.ReadByte()
+            Dim b = stream.ReadByte()
             If b = -1 Then Exit While
-            ms.WriteByte(CByte(b))
+            buf.Add(CByte(b))
             count += 1
 
-            Dim bytes = ms.ToArray()
-            If bytes.Length >= 4 Then
-                Dim l = bytes.Length
-                If bytes(l - 4) = 13 AndAlso bytes(l - 3) = 10 AndAlso bytes(l - 2) = 13 AndAlso bytes(l - 1) = 10 Then
-                    Return Encoding.UTF8.GetString(bytes)
+            ' Cek terminator \r\n\r\n hanya pada 4 byte terakhir (tanpa ToArray per-byte = O(n^2))
+            If buf.Count >= 4 Then
+                Dim l = buf.Count
+                If buf(l - 4) = 13 AndAlso buf(l - 3) = 10 AndAlso buf(l - 2) = 13 AndAlso buf(l - 1) = 10 Then
+                    Return Encoding.UTF8.GetString(buf.ToArray())
                 End If
             End If
         End While
 
-        Return Encoding.UTF8.GetString(ms.ToArray())
+        Return Encoding.UTF8.GetString(buf.ToArray())
     End Function
 
     Private Function GetHeaderValue(lines As String(), headerName As String) As String
@@ -715,6 +842,20 @@ Public Class ScannerServer
     Public Shared Function GetLocalIPAddress() As String
         Dim list = GetAvailableIPAddresses()
         Return list(0).IP
+    End Function
+
+    ''' <summary>
+    ''' Perbandingan string constant-time untuk mencegah timing attack.
+    ''' Selalu membandingkan semua karakter tanpa short-circuit.
+    ''' </summary>
+    Private Shared Function ConstantTimeEquals(a As String, b As String) As Boolean
+        If a Is Nothing OrElse b Is Nothing Then Return False
+        If a.Length <> b.Length Then Return False
+        Dim result As Integer = 0
+        For i = 0 To a.Length - 1
+            result = result Or (AscW(a(i)) Xor AscW(b(i)))
+        Next
+        Return result = 0
     End Function
 End Class
 
