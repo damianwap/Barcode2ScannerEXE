@@ -114,7 +114,8 @@ Public Class Form1
         Catch ex As Exception
             MessageBox.Show("Gagal memulai server internal:" & vbCrLf & ex.Message, "Error Server", MessageBoxButtons.OK, MessageBoxIcon.Error)
             lblServerStatus.Text = "● Server Gagal"
-            lblServerStatus.ForeColor = Color.FromArgb(239, 68, 68)
+            lblServerStatus.ForeColor = Color.FromArgb(252, 165, 165)
+            lblServerStatus.BackColor = Color.FromArgb(69, 10, 10)
         End Try
     End Sub
 
@@ -161,7 +162,7 @@ Public Class Form1
             btnToggleQR.Text = "🙈 Sembunyikan QR"
             picQRCode.Visible = True
             lnkUrl.Visible = True
-            cardQR.Size = New Size(316, 368)
+            cardQR.Size = New Size(316, 374)
             RenderQrImage()
             _qrHideTimer = New Windows.Forms.Timer()
             _qrHideTimer.Interval = 60000
@@ -174,7 +175,7 @@ Public Class Form1
             btnToggleQR.Text = "👁 Tampilkan QR untuk Scan"
             picQRCode.Visible = False
             lnkUrl.Visible = False
-            cardQR.Size = New Size(316, 181)
+            cardQR.Size = New Size(316, 190)
             If picQRCode.Image IsNot Nothing Then
                 picQRCode.Image.Dispose()
                 picQRCode.Image = Nothing
@@ -217,8 +218,8 @@ Public Class Form1
 
         If count = 0 Then
             lblPhoneStatus.Text = "● HP Belum Tersambung"
-            lblPhoneStatus.ForeColor = Color.FromArgb(245, 158, 11)
-            lblPhoneStatus.BackColor = Color.FromArgb(35, 30, 20)
+            lblPhoneStatus.ForeColor = Color.FromArgb(251, 191, 36)
+            lblPhoneStatus.BackColor = Color.FromArgb(69, 26, 3)
             lblDeviceVal.Text = "-"
             toolTipDevices.SetToolTip(lblPhoneStatus, "Belum ada HP yang tersambung. Scan QR Code di sebelah kiri.")
             toolTipDevices.SetToolTip(cardDevice, "Belum ada HP yang tersambung. Scan QR Code di sebelah kiri.")
@@ -264,7 +265,7 @@ Public Class Form1
                 Dim badge As New Label()
                 badge.Text = $"● {dev.DeviceName} ({dev.IP})"
                 badge.Font = New Font("Segoe UI", 8.25!, FontStyle.Bold)
-                badge.ForeColor = Color.FromArgb(52, 211, 153)
+                badge.ForeColor = Color.FromArgb(163, 230, 53)
                 badge.BackColor = Color.FromArgb(15, 30, 45)
                 badge.BorderStyle = BorderStyle.FixedSingle
                 badge.Padding = New Padding(8, 3, 8, 3)
@@ -584,7 +585,7 @@ Public Class Form1
             End Try
             _rtOutputEnabled = False
             btnRealTime.Text = "▶ Real-Time: OFF"
-            btnRealTime.BackColor = Color.FromArgb(5, 150, 105)
+            btnRealTime.BackColor = Color.FromArgb(51, 65, 85)
             lblLog.Text = "Real-time output dimatikan."
         End If
     End Sub
