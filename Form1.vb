@@ -206,7 +206,7 @@ Public Class Form1
                 UpdateTrayText()
                 If Not _trayBalloonShown Then
                     _trayBalloonShown = True
-                    _trayIcon.ShowBalloonTip(3000, "ScanKilat tetap berjalan",
+                    _trayIcon.ShowBalloonTip(3000, "ScanKilat",
                         "Aplikasi diminimize ke system tray. Server scanner & auto-type tetap aktif. Klik 2x ikon tray untuk membuka lagi.",
                         ToolTipIcon.Info)
                 End If

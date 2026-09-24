@@ -8,9 +8,9 @@ Public Class CustomDevForm
     Inherits Form
 
     Private Const ContactPhone As String = "+62 813-9118-2026"
-    Private Const ContactWaLink As String = "https://wa.me/6281391182026?text=Halo%2C%20saya%20tertarik%20konsultasi%20layanan%20kustom%20atau%20integrasi%20ScanKilat."
-    Private Const ContactEmail As String = "kontak@vicilaptop.com"
-    Private Const ContactEmailMailto As String = "mailto:kontak@vicilaptop.com?subject=Konsultasi%20Layanan%20Kustom%20%26%20Integrasi%20ScanKilat"
+    Private Const ContactWaLink As String = "https://wa.me/6282260276542?text=Halo%2C%20saya%20tertarik%20konsultasi%20layanan%20kustom%20atau%20integrasi%20ScanKilat."
+    Private Const ContactEmail As String = "vicilaptopid@gmail.com"
+    Private Const ContactEmailMailto As String = "mailto:vicilaptopid@gmail.com?subject=Konsultasi%20Layanan%20Kustom%20%26%20Integrasi%20ScanKilat"
     Private Const ContactWeb As String = "https://github.com/damianwap/Barcode2ScannerEXE"
 
     Public Sub New()
