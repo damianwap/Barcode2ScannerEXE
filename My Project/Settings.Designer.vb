@@ -64,9 +64,9 @@ Namespace My
     Friend Module MySettingsProperty
 
         <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")> _
-        Friend ReadOnly Property Settings() As Global.Barcode2Scanner.My.MySettings
+        Friend ReadOnly Property Settings() As Global.ScanKilat.My.MySettings
             Get
-                Return Global.Barcode2Scanner.My.MySettings.Default
+                Return Global.ScanKilat.My.MySettings.Default
             End Get
         End Property
     End Module

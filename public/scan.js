@@ -389,7 +389,7 @@ async function startPairScanner() {
         // Langsung otomatis terhubung
         connectToServer(session, joinKey);
       } else {
-        showErr('⚠️ QR Code tidak sesuai format Barcode2Scanner.<br>Pastikan mengarahkan kamera ke QR Code di layar laptop!');
+        showErr('⚠️ QR Code tidak sesuai format ScanKilat.<br>Pastikan mengarahkan kamera ke QR Code di layar laptop!');
       }
     };
 
@@ -641,33 +641,57 @@ function recordLocal(text, format, isOffline) {
 }
 
 // Kirim seluruh offline queue ke laptop (dipanggil otomatis saat reconnect + tombol Sync).
+// Mengembalikan Promise jumlah item yang terkirim agar status history bisa diupdate.
 function flushOfflineQueue() {
-  if (!connected || !ws || ws.readyState !== WebSocket.OPEN) return;
-  if (offlineQueue.length === 0) return;
+  if (!connected || !ws || ws.readyState !== WebSocket.OPEN) return Promise.resolve(0);
+  if (offlineQueue.length === 0) return Promise.resolve(0);
   const batch = offlineQueue.splice(0, offlineQueue.length);
   saveOfflineQueue(offlineQueue);
   updateOfflineBadge();
-  let n = 0;
+  let sentTexts = [];
   for (const item of batch) {
     try {
       ws.send(JSON.stringify({ type: 'scan', session, text: item.text, format: item.format || 'unknown', offlineAt: item.at }));
-      n++;
+      sentTexts.push(item.text);
     } catch (e) {
       offlineQueue.unshift(item);
     }
   }
   saveOfflineQueue(offlineQueue);
   updateOfflineBadge();
-  if (n > 0) ok('✅ ' + n + ' scan offline tersinkron ke laptop!');
+  if (sentTexts.length > 0) {
+    markSynced(sentTexts);
+    renderHistStore();
+    ok('✅ ' + sentTexts.length + ' scan offline tersinkron ke laptop!');
+  }
+  return Promise.resolve(sentTexts.length);
+}
+
+// Tandai entry history offline sebagai sudah tersinkron (status berubah jadi OK).
+function markSynced(sentTexts) {
+  if (!sentTexts || sentTexts.length === 0) return;
+  const remaining = {};
+  for (const t of sentTexts) remaining[String(t)] = (remaining[String(t)] || 0) + 1;
+  let changed = false;
+  for (const item of histStore) {
+    if (!item.offline) continue;
+    const key = String(item.text);
+    if (remaining[key] > 0) {
+      remaining[key]--;
+      item.offline = false;
+      changed = true;
+    }
+  }
+  if (changed) saveHistStore();
 }
 
 if ($('btnSync')) {
-  $('btnSync').onclick = () => {
+  $('btnSync').onclick = async () => {
     if (!connected) {
       showErr('⚠️ Hubungkan ke laptop dulu, baru tekan Sync.');
       return;
     }
-    flushOfflineQueue();
+    await flushOfflineQueue();
     if (offlineQueue.length === 0) hideErr();
   };
 }

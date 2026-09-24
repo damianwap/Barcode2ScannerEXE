@@ -6,9 +6,9 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{02D5CC2B-9C25-48D7-A7CF-3295C7CE6EB9}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <StartupObject>Barcode2Scanner.My.MyApplication</StartupObject>
-    <RootNamespace>Barcode2Scanner</RootNamespace>
-    <AssemblyName>Barcode2Scanner</AssemblyName>
+    <StartupObject>ScanKilat.My.MyApplication</StartupObject>
+    <RootNamespace>ScanKilat</RootNamespace>
+    <AssemblyName>ScanKilat</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>WindowsForms</MyType>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
@@ -24,7 +24,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Debug\</OutputPath>
-    <DocumentationFile>Barcode2Scanner.xml</DocumentationFile>
+    <DocumentationFile>ScanKilat.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -34,7 +34,7 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>Barcode2Scanner.xml</DocumentationFile>
+    <DocumentationFile>ScanKilat.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
@@ -83,6 +83,35 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="AboutForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AboutForm.Designer.vb">
+      <DependentUpon>AboutForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NewSessionConfirmForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NewSessionConfirmForm.Designer.vb">
+      <DependentUpon>NewSessionConfirmForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FirewallSuccessForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FirewallSuccessForm.Designer.vb">
+      <DependentUpon>FirewallSuccessForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CustomDevForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CustomDevForm.Designer.vb">
+      <DependentUpon>CustomDevForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EmbeddedLoader.vb" />
     <Compile Include="ScannerServer.vb" />
     <Compile Include="CertManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -102,6 +131,12 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="CustomDevForm.resx">
+      <DependentUpon>CustomDevForm.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FirewallSuccessForm.resx">
+      <DependentUpon>FirewallSuccessForm.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.vb</DependentUpon>
     </EmbeddedResource>
@@ -125,7 +160,42 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="QRCoder" Version="1.8.0" />
+    <PackageReference Include="QRCoder" Version="1.8.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <Reference Include="QRCoder">
+      <HintPath>Libs\QRCoder.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Libs\QRCoder.dll">
+      <LogicalName>ScanKilat.Libs.QRCoder.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="app.ico">
+      <LogicalName>ScanKilat.app.ico</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\scan.html">
+      <LogicalName>ScanKilat.public.scan.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\scan.js">
+      <LogicalName>ScanKilat.public.scan.js</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\index.html">
+      <LogicalName>ScanKilat.public.index.html</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\index.js">
+      <LogicalName>ScanKilat.public.index.js</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\logo.png">
+      <LogicalName>ScanKilat.public.logo.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\vendor\html5-qrcode.min.js">
+      <LogicalName>ScanKilat.public.vendor.html5-qrcode.min.js</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="public\vendor\qrcode.min.js">
+      <LogicalName>ScanKilat.public.vendor.qrcode.min.js</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Content Include="app.ico">

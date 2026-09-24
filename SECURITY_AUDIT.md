@@ -1,4 +1,4 @@
-# Security Audit & Verification Report — Barcode2Scanner
+# Security Audit & Verification Report — ScanKilat
 
 - **Tanggal audit awal:** 2026-09-19
 - **Tanggal verifikasi & remediasi:** 2026-09-19
@@ -95,7 +95,7 @@ Jika halaman dibuka manual tanpa parameter `?key=`, antarmuka langsung memberi t
 Password `"123456"` di-hardcode dalam kode sumber dan file `certificate.pfx` yang sama disertakan dalam repositori/distribusi, sehingga private key TLS diketahui publik.
 
 ### Remediasi Diterapkan (`CertManager.vb` & `Form1.vb:46-54`):
-1. Dibuat modul [`CertManager.vb`](file:///C:/Users/prast/source/repos/Barcode2Scanner/CertManager.vb) yang secara otomatis membuat dan mengelola sertifikat TLS self-signed yang unik per-mesin/instalasi menggunakan Windows CryptoAPI (`certenroll.dll` / CNG) dan menyimpannya di `CurrentUser\My`.
+1. Dibuat modul [`CertManager.vb`](file:///C:/Users/prast/source/repos/ScanKilat/CertManager.vb) yang secara otomatis membuat dan mengelola sertifikat TLS self-signed yang unik per-mesin/instalasi menggunakan Windows CryptoAPI (`certenroll.dll` / CNG) dan menyimpannya di `CurrentUser\My`.
 2. Sertifikat dibuat dengan SAN (Subject Alternative Names) yang mencakup seluruh IP LAN adapter laptop.
 3. Server memuat sertifikat langsung dari store memori tanpa membaca file PFX statis dengan password hardcoded.
 
@@ -176,7 +176,7 @@ Website publik di IP awalan `172.` tidak dapat lagi melakukan Cross-Site WebSock
 
 ### Remediasi Diterapkan (`Form1.vb:236`):
 ```vb
-psi.Arguments = "advfirewall firewall add rule name=""Barcode2Scanner Port 3443"" dir=in action=allow protocol=TCP localport=3443 profile=private,domain"
+psi.Arguments = "advfirewall firewall add rule name=""ScanKilat Port 3443"" dir=in action=allow protocol=TCP localport=3443 profile=private,domain"
 ```
 Port 3443 hanya diizinkan pada jaringan Private (kantor/rumah) dan Domain. Port tetap tertutup saat perangkat berada pada jaringan Public (kafe, bandara, hotel).
 
@@ -210,7 +210,7 @@ Ditambahkan background timer `_cleanupTimer` yang memanggil `SweepRateLimits` se
 - **Status Remediasi:** ✅ **DISELESAIKAN**
 
 ### Remediasi Diterapkan:
-1. Seluruh kode JavaScript pada `scan.html` dipindahkan ke file statis terpisah [`public/scan.js`](file:///C:/Users/prast/source/repos/Barcode2Scanner/public/scan.js).
+1. Seluruh kode JavaScript pada `scan.html` dipindahkan ke file statis terpisah [`public/scan.js`](file:///C:/Users/prast/source/repos/ScanKilat/public/scan.js).
 2. Header Content-Security-Policy diperketat (`ScannerServer.vb:413`):
 ```http
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
@@ -245,7 +245,7 @@ Pengecekan dan penambahan batas `_activeConnections` dilakukan secara atomik men
 - **Status Remediasi:** ✅ **DISELESAIKAN**
 
 ### Remediasi Diterapkan:
-File [`.gitignore`](file:///C:/Users/prast/source/repos/Barcode2Scanner/.gitignore) telah dikonfigurasi untuk mengecualikan file `*.pfx`, `*.key`, `*.cer`, `bin/`, `obj/`, dan `.vs/`.
+File [`.gitignore`](file:///C:/Users/prast/source/repos/ScanKilat/.gitignore) telah dikonfigurasi untuk mengecualikan file `*.pfx`, `*.key`, `*.cer`, `bin/`, `obj/`, dan `.vs/`.
 
 ---
 

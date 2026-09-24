@@ -40,6 +40,8 @@ Partial Class Form1
     Friend WithEvents lblSuffix As System.Windows.Forms.Label
     Friend WithEvents cmbSuffix As System.Windows.Forms.ComboBox
     Friend WithEvents lblTip As System.Windows.Forms.Label
+    Friend WithEvents btnAbout As System.Windows.Forms.Button
+    Friend WithEvents btnCustomDev As System.Windows.Forms.Button
 
     Friend WithEvents pnlRight As System.Windows.Forms.Panel
     Friend WithEvents pnlStats As System.Windows.Forms.Panel
@@ -96,6 +98,8 @@ Partial Class Form1
         Me.lblSuffix = New System.Windows.Forms.Label()
         Me.cmbSuffix = New System.Windows.Forms.ComboBox()
         Me.lblTip = New System.Windows.Forms.Label()
+        Me.btnAbout = New System.Windows.Forms.Button()
+        Me.btnCustomDev = New System.Windows.Forms.Button()
         Me.cardQR = New System.Windows.Forms.Panel()
         Me.lblQRTitle = New System.Windows.Forms.Label()
         Me.lblIp = New System.Windows.Forms.Label()
@@ -171,9 +175,9 @@ Partial Class Form1
         Me.lblTitle.ForeColor = System.Drawing.Color.White
         Me.lblTitle.Location = New System.Drawing.Point(16, 8)
         Me.lblTitle.Name = "lblTitle"
-        Me.lblTitle.Size = New System.Drawing.Size(181, 25)
+        Me.lblTitle.Size = New System.Drawing.Size(139, 25)
         Me.lblTitle.TabIndex = 0
-        Me.lblTitle.Text = "⚡ SCANKILAT PRO"
+        Me.lblTitle.Text = "⚡ SCANKILAT"
         '
         'lblSubtitle
         '
@@ -182,15 +186,15 @@ Partial Class Form1
         Me.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(CType(CType(148, Byte), Integer), CType(CType(163, Byte), Integer), CType(CType(184, Byte), Integer))
         Me.lblSubtitle.Location = New System.Drawing.Point(17, 36)
         Me.lblSubtitle.Name = "lblSubtitle"
-        Me.lblSubtitle.Size = New System.Drawing.Size(371, 15)
+        Me.lblSubtitle.Size = New System.Drawing.Size(403, 15)
         Me.lblSubtitle.TabIndex = 1
-        Me.lblSubtitle.Text = "Kamera HP sebagai Barcode Scanner Fisik & Auto-Type ke Aplikasi Lain"
+        Me.lblSubtitle.Text = "Ubah Kamera Smartphone Menjadi Alat Scanner Fisik. Tanpa Install Apapun" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10)
         '
         'lblServerStatus
         '
         Me.lblServerStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lblServerStatus.BackColor = System.Drawing.Color.FromArgb(CType(CType(16, Byte), Integer), CType(CType(45, Byte), Integer), CType(CType(35, Byte), Integer))
-        Me.lblServerStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.lblServerStatus.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D
         Me.lblServerStatus.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblServerStatus.ForeColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(211, Byte), Integer), CType(CType(153, Byte), Integer))
         Me.lblServerStatus.Location = New System.Drawing.Point(532, 16)
@@ -205,7 +209,7 @@ Partial Class Form1
         '
         Me.lblPhoneStatus.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.lblPhoneStatus.BackColor = System.Drawing.Color.FromArgb(CType(CType(69, Byte), Integer), CType(CType(26, Byte), Integer), CType(CType(3, Byte), Integer))
-        Me.lblPhoneStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.lblPhoneStatus.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D
         Me.lblPhoneStatus.Font = New System.Drawing.Font("Segoe UI", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.lblPhoneStatus.ForeColor = System.Drawing.Color.FromArgb(CType(CType(251, Byte), Integer), CType(CType(191, Byte), Integer), CType(CType(36, Byte), Integer))
         Me.lblPhoneStatus.Location = New System.Drawing.Point(778, 16)
@@ -231,18 +235,19 @@ Partial Class Form1
         'cardAutoType
         '
         Me.cardAutoType.BackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(41, Byte), Integer), CType(CType(59, Byte), Integer))
-        Me.cardAutoType.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.cardAutoType.Controls.Add(Me.lblAutoTypeTitle)
         Me.cardAutoType.Controls.Add(Me.chkAutoType)
         Me.cardAutoType.Controls.Add(Me.chkBeep)
         Me.cardAutoType.Controls.Add(Me.lblSuffix)
         Me.cardAutoType.Controls.Add(Me.cmbSuffix)
         Me.cardAutoType.Controls.Add(Me.lblTip)
+        Me.cardAutoType.Controls.Add(Me.btnAbout)
+        Me.cardAutoType.Controls.Add(Me.btnCustomDev)
         Me.cardAutoType.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.cardAutoType.Location = New System.Drawing.Point(12, 202)
+        Me.cardAutoType.Location = New System.Drawing.Point(12, 244)
         Me.cardAutoType.Name = "cardAutoType"
         Me.cardAutoType.Padding = New System.Windows.Forms.Padding(12)
-        Me.cardAutoType.Size = New System.Drawing.Size(316, 382)
+        Me.cardAutoType.Size = New System.Drawing.Size(316, 340)
         Me.cardAutoType.TabIndex = 1
         '
         'lblAutoTypeTitle
@@ -321,10 +326,43 @@ Partial Class Form1
     "a. Hasil scan barcode HP akan langsung terketik otomatis seperti scanner fisik U" &
     "SB!"
         '
+        'btnAbout
+        '
+        Me.btnAbout.BackColor = System.Drawing.Color.FromArgb(CType(CType(51, Byte), Integer), CType(CType(65, Byte), Integer), CType(CType(85, Byte), Integer))
+        Me.btnAbout.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.btnAbout.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(CType(CType(71, Byte), Integer), CType(CType(85, Byte), Integer), CType(CType(105, Byte), Integer))
+        Me.btnAbout.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(41, Byte), Integer), CType(CType(59, Byte), Integer))
+        Me.btnAbout.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(CType(CType(71, Byte), Integer), CType(CType(85, Byte), Integer), CType(CType(105, Byte), Integer))
+        Me.btnAbout.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnAbout.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnAbout.ForeColor = System.Drawing.Color.White
+        Me.btnAbout.Location = New System.Drawing.Point(12, 188)
+        Me.btnAbout.Name = "btnAbout"
+        Me.btnAbout.Size = New System.Drawing.Size(292, 30)
+        Me.btnAbout.TabIndex = 6
+        Me.btnAbout.Text = "ℹ Tentang Aplikasi"
+        Me.btnAbout.UseVisualStyleBackColor = False
+        '
+        'btnCustomDev
+        '
+        Me.btnCustomDev.BackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(58, Byte), Integer), CType(CType(138, Byte), Integer))
+        Me.btnCustomDev.Cursor = System.Windows.Forms.Cursors.Hand
+        Me.btnCustomDev.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(CType(CType(59, Byte), Integer), CType(CType(130, Byte), Integer), CType(CType(246, Byte), Integer))
+        Me.btnCustomDev.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(CType(CType(29, Byte), Integer), CType(CType(78, Byte), Integer), CType(CType(216, Byte), Integer))
+        Me.btnCustomDev.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(CType(CType(37, Byte), Integer), CType(CType(99, Byte), Integer), CType(CType(235, Byte), Integer))
+        Me.btnCustomDev.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.btnCustomDev.Font = New System.Drawing.Font("Segoe UI", 8.5!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.btnCustomDev.ForeColor = System.Drawing.Color.White
+        Me.btnCustomDev.Location = New System.Drawing.Point(12, 224)
+        Me.btnCustomDev.Name = "btnCustomDev"
+        Me.btnCustomDev.Size = New System.Drawing.Size(292, 32)
+        Me.btnCustomDev.TabIndex = 7
+        Me.btnCustomDev.Text = "💼 Layanan Custom & Integrasi"
+        Me.btnCustomDev.UseVisualStyleBackColor = False
+        '
         'cardQR
         '
         Me.cardQR.BackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(41, Byte), Integer), CType(CType(59, Byte), Integer))
-        Me.cardQR.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.cardQR.Controls.Add(Me.lblQRTitle)
         Me.cardQR.Controls.Add(Me.lblIp)
         Me.cardQR.Controls.Add(Me.cmbNetworkIP)
@@ -619,7 +657,6 @@ Partial Class Form1
         'cardTotal
         '
         Me.cardTotal.BackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(41, Byte), Integer), CType(CType(59, Byte), Integer))
-        Me.cardTotal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.cardTotal.Controls.Add(Me.lblTotalVal)
         Me.cardTotal.Controls.Add(Me.lblTotalTitle)
         Me.cardTotal.Location = New System.Drawing.Point(0, 0)
@@ -652,7 +689,6 @@ Partial Class Form1
         'cardLast
         '
         Me.cardLast.BackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(41, Byte), Integer), CType(CType(59, Byte), Integer))
-        Me.cardLast.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.cardLast.Controls.Add(Me.lblLastVal)
         Me.cardLast.Controls.Add(Me.lblLastTitle)
         Me.cardLast.Location = New System.Drawing.Point(170, 0)
@@ -687,7 +723,6 @@ Partial Class Form1
         Me.cardDevice.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.cardDevice.BackColor = System.Drawing.Color.FromArgb(CType(CType(30, Byte), Integer), CType(CType(41, Byte), Integer), CType(CType(59, Byte), Integer))
-        Me.cardDevice.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.cardDevice.Controls.Add(Me.lblDeviceVal)
         Me.cardDevice.Controls.Add(Me.lblDeviceTitle)
         Me.cardDevice.Location = New System.Drawing.Point(444, 0)
@@ -868,7 +903,7 @@ Partial Class Form1
         Me.MinimumSize = New System.Drawing.Size(950, 620)
         Me.Name = "Form1"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "ScanKilat Pro — Wireless Server & Keystroke Auto-Typer"
+        Me.Text = "ScanKilat — Wireless Server & Keystroke Auto-Typer"
         Me.pnlHeader.ResumeLayout(False)
         Me.pnlHeader.PerformLayout()
         Me.pnlLeft.ResumeLayout(False)

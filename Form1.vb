@@ -30,6 +30,7 @@ Public Class Form1
     Private _trayMenu As ContextMenuStrip = Nothing
     Private _allowClose As Boolean = False
     Private _trayBalloonShown As Boolean = False
+    Private _historyLoading As Boolean = False
 
     ' Real-time output: file CSV/XML yang ditulis otomatis tiap scan masuk.
     ' - CSV: append per baris (selalu valid). Kalau file sedang dibuka/dikunci Excel,
@@ -58,17 +59,15 @@ Public Class Form1
         SetupTrayIcon()
 
         Try
-            Dim icoPath = Path.Combine(Application.StartupPath, "app.ico")
-            If Not File.Exists(icoPath) Then
-                icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico")
-            End If
-            If File.Exists(icoPath) Then
-                Me.Icon = New Icon(icoPath)
-                Try
-                    If _trayIcon IsNot Nothing Then _trayIcon.Icon = Me.Icon
-                Catch
-                End Try
-            End If
+            Using icoStream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("ScanKilat.app.ico")
+                If icoStream IsNot Nothing Then
+                    Me.Icon = New Icon(icoStream)
+                End If
+            End Using
+            Try
+                If Me.Icon IsNot Nothing AndAlso _trayIcon IsNot Nothing Then _trayIcon.Icon = Me.Icon
+            Catch
+            End Try
         Catch
         End Try
 
@@ -103,6 +102,7 @@ Public Class Form1
             SetQrRevealed(False)
             UpdateQRCode()
             UpdatePhoneStatusUI()
+            LoadTodayHistory()
 
             ' Susun docking dan z-order agar tidak ada kontrol yang saling tumpang tindih:
             ' pnlStats dan pnlDevicesBar berada di bagian atas, dgvScan mengisi ruang tengah (Fill), pnlBottom di bawah
@@ -136,6 +136,10 @@ Public Class Form1
             Return
         End If
         Try
+            FlushRealTimeFile()
+        Catch
+        End Try
+        Try
             If _trayIcon IsNot Nothing Then
                 _trayIcon.Visible = False
                 _trayIcon.Dispose()
@@ -168,22 +172,21 @@ Public Class Form1
             If _trayIcon IsNot Nothing Then Return
             _trayMenu = New ContextMenuStrip()
             _trayMenu.Items.Add("Buka ScanKilat", Nothing, AddressOf TrayOpen_Click)
+            _trayMenu.Items.Add("Layanan Custom & Integrasi", Nothing, AddressOf TrayCustomDev_Click)
+            _trayMenu.Items.Add("Tentang", Nothing, AddressOf TrayAbout_Click)
             _trayMenu.Items.Add(New ToolStripSeparator())
             _trayMenu.Items.Add("Keluar", Nothing, AddressOf TrayExit_Click)
             _trayIcon = New NotifyIcon()
-            _trayIcon.Text = "ScanKilat Pro — server scanner aktif"
+            _trayIcon.Text = "ScanKilat — server scanner aktif"
             _trayIcon.ContextMenuStrip = _trayMenu
             Try
-                If Me.Icon IsNot Nothing Then
-                    _trayIcon.Icon = CType(Me.Icon.Clone(), Icon)
-                Else
-                    Dim icoPath = Path.Combine(Application.StartupPath, "app.ico")
-                    If File.Exists(icoPath) Then
-                        _trayIcon.Icon = New Icon(icoPath)
+                Using icoStream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("ScanKilat.app.ico")
+                    If icoStream IsNot Nothing Then
+                        _trayIcon.Icon = New Icon(icoStream)
                     Else
                         _trayIcon.Icon = System.Drawing.SystemIcons.Application
                     End If
-                End If
+                End Using
             Catch
                 _trayIcon.Icon = System.Drawing.SystemIcons.Application
             End Try
@@ -223,10 +226,24 @@ Public Class Form1
         End Try
     End Sub
 
+    Public Sub ShowRunningInstanceNotification()
+        Try
+            If Me.InvokeRequired Then
+                Me.BeginInvoke(Sub() ShowRunningInstanceNotification())
+                Return
+            End If
+            ShowFromTray()
+            MessageBox.Show(Me, "ScanKilat sudah berjalan." & vbCrLf & vbCrLf &
+                            "Jendela yang sudah ada dimunculkan kembali — instance ganda dicegah agar tidak bentrok di port 3443.",
+                            "ScanKilat Sudah Berjalan", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Catch
+        End Try
+    End Sub
+
     Private Sub UpdateTrayText()
         Try
             If _trayIcon Is Nothing Then Return
-            Dim txt = $"ScanKilat Pro — {_totalScans} scan"
+            Dim txt = $"ScanKilat — {_totalScans} scan"
             If txt.Length > 63 Then txt = txt.Substring(0, 63)
             _trayIcon.Text = txt
         Catch
@@ -246,7 +263,41 @@ Public Class Form1
         ShowFromTray()
     End Sub
 
+    Private Sub TrayAbout_Click(sender As Object, e As EventArgs)
+        ShowAbout()
+    End Sub
+
+    Private Sub btnAbout_Click(sender As Object, e As EventArgs) Handles btnAbout.Click
+        ShowAbout()
+    End Sub
+
+    Private Sub ShowAbout()
+        Using dlg As New AboutForm()
+            dlg.ShowDialog(Me)
+        End Using
+    End Sub
+
+    Private Sub TrayCustomDev_Click(sender As Object, e As EventArgs)
+        ShowCustomDev()
+    End Sub
+
+    Private Sub btnCustomDev_Click(sender As Object, e As EventArgs) Handles btnCustomDev.Click
+        ShowCustomDev()
+    End Sub
+
+    Private Sub ShowCustomDev()
+        Using dlg As New CustomDevForm()
+            dlg.ShowDialog(Me)
+        End Using
+    End Sub
+
     Private Sub TrayExit_Click(sender As Object, e As EventArgs)
+        Dim msg = "Apakah Anda yakin ingin menutup ScanKilat?" & vbCrLf & vbCrLf &
+                  "Server scanner akan berhenti dan HP tidak bisa scan lagi."
+        If MessageBox.Show(msg, "Konfirmasi Keluar", MessageBoxButtons.YesNo,
+                           MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) <> DialogResult.Yes Then
+            Return
+        End If
         _allowClose = True
         Me.Close()
     End Sub
@@ -493,6 +544,7 @@ Public Class Form1
         End If
 
         AppendRealTimeOutput(DateTime.Now, deviceName, text, format)
+        AppendHistory(DateTime.Now, deviceName, text, format)
         PostToGoogleSheets(DateTime.Now, deviceName, text, format)
     End Sub
 
@@ -559,6 +611,13 @@ Public Class Form1
 
     Private Sub btnNewSession_Click(sender As Object, e As EventArgs) Handles btnNewSession.Click
         If _server Is Nothing Then Return
+
+        Using dlg As New NewSessionConfirmForm(_server.ActiveDevices)
+            If dlg.ShowDialog(Me) <> DialogResult.OK Then
+                Return
+            End If
+        End Using
+
         _server.GenerateNewSession()
         SetQrRevealed(False)
         UpdateQRCode()
@@ -573,14 +632,16 @@ Public Class Form1
         Try
             Dim psi As New ProcessStartInfo()
             psi.FileName = "netsh"
-            psi.Arguments = "advfirewall firewall add rule name=""Barcode2Scanner Port 3443"" dir=in action=allow protocol=TCP localport=3443 profile=private,domain remoteip=localsubnet"
+            psi.Arguments = "advfirewall firewall add rule name=""ScanKilat Port 3443"" dir=in action=allow protocol=TCP localport=3443 profile=private,domain remoteip=localsubnet"
             psi.Verb = "runas"
             psi.UseShellExecute = True
             psi.WindowStyle = ProcessWindowStyle.Hidden
             Dim p = Process.Start(psi)
             p.WaitForExit()
             lblLog.Text = "Port 3443 diizinkan di Windows Defender Firewall."
-            MessageBox.Show("Port 3443 berhasil diizinkan di Windows Defender Firewall!" & vbCrLf & "Sekarang HP dapat membuka halaman scanner dengan lancar.", "Firewall Diizinkan", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Using dlg As New FirewallSuccessForm(3443)
+                dlg.ShowDialog(Me)
+            End Using
         Catch ex As Exception
             MessageBox.Show("Permintaan izin administrator dibatalkan atau gagal:" & vbCrLf & ex.Message, "Perhatian", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
@@ -671,7 +732,13 @@ Public Class Form1
             _totalScans = 0
             lblTotalVal.Text = "0"
             lblLastVal.Text = "-"
-            lblLog.Text = "Tabel barcode telah dibersihkan."
+            Try
+                Dim histPath = TodayHistoryPath()
+                If File.Exists(histPath) Then File.Delete(histPath)
+                lblLog.Text = "Tabel barcode telah dibersihkan (history hari ini juga dihapus)."
+            Catch
+                lblLog.Text = "Tabel barcode telah dibersihkan."
+            End Try
         End If
     End Sub
 
@@ -785,6 +852,110 @@ Public Class Form1
     Private Shared Function XmlEsc(v As String) As String
         If String.IsNullOrEmpty(v) Then Return ""
         Return v.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("""", "&quot;")
+    End Function
+
+    ' ================= AUTO-HISTORY HARIAN =================
+    ' Setiap scan otomatis di-append ke %APPDATA%\ScanKilat\History\history-yyyy-MM-dd.csv
+    ' dan dimuat ulang ke tabel saat aplikasi dibuka, sehingga history tidak hilang walau ditutup.
+
+    Private Shared Function HistoryDir() As String
+        Return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ScanKilat", "History")
+    End Function
+
+    Private Shared Function TodayHistoryPath() As String
+        Return Path.Combine(HistoryDir(), $"history-{DateTime.Now:yyyy-MM-dd}.csv")
+    End Function
+
+    Private Sub AppendHistory(waktu As DateTime, device As String, barcode As String, fmt As String)
+        If _historyLoading Then Return
+        Try
+            Directory.CreateDirectory(HistoryDir())
+            Dim histPath = TodayHistoryPath()
+            If Not File.Exists(histPath) Then
+                File.WriteAllText(histPath, """No"",""Waktu"",""Perangkat"",""Barcode"",""Format""" & vbCrLf, Encoding.UTF8)
+            End If
+            Dim line = $"""{EscapeCsv(_totalScans.ToString())}"",""{EscapeCsv(waktu.ToString("dd-MM-yyyy HH:mm:ss"))}"",""{EscapeCsv(device)}"",""{EscapeCsv(barcode)}"",""{EscapeCsv(fmt)}""{vbCrLf}"
+            AppendText(histPath, line)
+        Catch
+        End Try
+    End Sub
+
+    Private Sub LoadTodayHistory()
+        Try
+            Dim histPath = TodayHistoryPath()
+            If Not File.Exists(histPath) Then Return
+            Dim lines = File.ReadAllLines(histPath, Encoding.UTF8)
+            If lines.Length <= 1 Then Return
+            _historyLoading = True
+            Try
+                For i = 1 To lines.Length - 1
+                    Dim fields = ParseCsvLine(lines(i))
+                    If fields Is Nothing OrElse fields.Length < 5 Then Continue For
+                    Dim no As Integer
+                    If Not Integer.TryParse(UnescapeCsvCell(fields(0)), no) Then Continue For
+                    Dim waktu = UnescapeCsvCell(fields(1))
+                    Dim device = UnescapeCsvCell(fields(2))
+                    Dim barcode = UnescapeCsvCell(fields(3))
+                    Dim fmt = UnescapeCsvCell(fields(4))
+                    _totalScans = Math.Max(_totalScans, no)
+                    dgvScan.Rows.Insert(0, no, waktu, device, barcode, fmt)
+                Next
+                lblTotalVal.Text = _totalScans.ToString()
+                If dgvScan.Rows.Count > 0 Then
+                    lblLastVal.Text = dgvScan.Rows(0).Cells(3).Value?.ToString()
+                    dgvScan.ClearSelection()
+                    dgvScan.Rows(0).Selected = True
+                    dgvScan.FirstDisplayedScrollingRowIndex = 0
+                End If
+                UpdateTrayText()
+                lblLog.Text = $"History hari ini dimuat: {_totalScans} scan."
+            Finally
+                _historyLoading = False
+            End Try
+        Catch
+            _historyLoading = False
+        End Try
+    End Sub
+
+    Private Shared Function ParseCsvLine(line As String) As String()
+        Dim fields As New List(Of String)()
+        Dim cur As New StringBuilder()
+        Dim inQuotes = False
+        Dim i = 0
+        While i < line.Length
+            Dim c = line(i)
+            If inQuotes Then
+                If c = """"c Then
+                    If i + 1 < line.Length AndAlso line(i + 1) = """"c Then
+                        cur.Append(""""c)
+                        i += 1
+                    Else
+                        inQuotes = False
+                    End If
+                Else
+                    cur.Append(c)
+                End If
+            Else
+                If c = """"c Then
+                    inQuotes = True
+                ElseIf c = ","c Then
+                    fields.Add(cur.ToString())
+                    cur.Clear()
+                Else
+                    cur.Append(c)
+                End If
+            End If
+            i += 1
+        End While
+        fields.Add(cur.ToString())
+        Return fields.ToArray()
+    End Function
+
+    Private Shared Function UnescapeCsvCell(v As String) As String
+        If String.IsNullOrEmpty(v) Then Return ""
+        Dim s = v
+        If s.StartsWith("'") AndAlso s.Length > 1 Then s = s.Substring(1)
+        Return s
     End Function
 
     Private Shared Function BuildSpreadsheetMlHeader() As String

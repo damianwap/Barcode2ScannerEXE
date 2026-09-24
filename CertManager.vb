@@ -11,14 +11,14 @@ Imports System.Text
 ''' (bawaan Windows) dan disimpan di certificate store CurrentUser\My.
 ''' Private key tidak pernah diekspor ke file dan tidak ada password hardcoded —
 ''' kunci dilindungi ACL key container Windows milik pengguna saat ini.
-''' Thumbprint sertifikat dipersist di %APPDATA%\Barcode2Scanner\cert-thumbprint.txt.
+''' Thumbprint sertifikat dipersist di %APPDATA%\ScanKilat\cert-thumbprint.txt.
 ''' </summary>
 Public Module CertManager
-    Private Const SubjectName As String = "CN=Barcode2Scanner Local"
-    Private Const FriendlyName As String = "Barcode2Scanner Local"
+    Private Const SubjectName As String = "CN=ScanKilat Local"
+    Private Const FriendlyName As String = "ScanKilat Local"
 
     Private Function AppDataDir() As String
-        Return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Barcode2Scanner")
+        Return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ScanKilat")
     End Function
 
     Private Function ThumbprintFile() As String

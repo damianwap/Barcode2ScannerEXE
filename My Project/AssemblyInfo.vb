@@ -8,11 +8,11 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("ScanKilat Pro")>
-<Assembly: AssemblyDescription("ScanKilat Pro — Ubah HP Jadi Barcode Scanner Nirkabel & Auto-Type ke PC")>
-<Assembly: AssemblyCompany("ScanKilat")>
-<Assembly: AssemblyProduct("ScanKilat Pro")>
-<Assembly: AssemblyCopyright("Copyright © 2026 ScanKilat")>
+<Assembly: AssemblyTitle("ScanKilat")>
+<Assembly: AssemblyDescription("ScanKilat — Ubah HP Jadi Barcode Scanner Nirkabel & Auto-Type ke PC")>
+<Assembly: AssemblyCompany("ViciLaptop")>
+<Assembly: AssemblyProduct("ScanKilat")>
+<Assembly: AssemblyCopyright("Copyright © 2026 ViciLaptop")>
 <Assembly: AssemblyTrademark("ScanKilat")>
 
 <Assembly: ComVisible(False)>
@@ -31,5 +31,5 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")>
 
-<Assembly: AssemblyVersion("1.0.0.0")>
-<Assembly: AssemblyFileVersion("1.0.0.0")>
+<Assembly: AssemblyVersion("1.2.12.0")>
+<Assembly: AssemblyFileVersion("1.2.12.0")>

@@ -505,7 +505,10 @@ Public Class ScannerServer
                 End While
 
             Else
-                ' Layani File Statis (scan.html, vendor/html5-qrcode.min.js)
+                ' Layani file statis dari EMBEDDED RESOURCE (exe tunggal) dengan
+                ' fallback ke folder public/ di disk (mode dev / override manual).
+                ' Allowlist ketat: hanya file yang dikenal yang boleh diserve,
+                ' sehingga path traversal mustahil (tidak ada path yang digabung).
                 Dim parts = requestLine.Split(" "c)
                 Dim rawUrl = If(parts.Length > 1, parts(1).Split("?"c)(0), "/")
                 Dim decodedUrl = WebUtility.UrlDecode(rawUrl)
@@ -513,33 +516,79 @@ Public Class ScannerServer
                     decodedUrl = "/scan.html"
                 End If
 
-                ' Normalisasi path relatif
-                Dim relPath = decodedUrl.TrimStart("/"c, "\"c).Replace("/", Path.DirectorySeparatorChar).Replace("\", Path.DirectorySeparatorChar)
-                Dim canonicalPublicDir = Path.GetFullPath(_publicDir)
-                If Not canonicalPublicDir.EndsWith(Path.DirectorySeparatorChar.ToString()) Then
-                    canonicalPublicDir &= Path.DirectorySeparatorChar
+                Dim urlKey = decodedUrl.Replace("\"c, "/"c).ToLowerInvariant()
+                Dim embeddedName As String = Nothing
+                Select Case urlKey
+                    Case "/scan.html"
+                        embeddedName = "ScanKilat.public.scan.html"
+                    Case "/scan.js"
+                        embeddedName = "ScanKilat.public.scan.js"
+                    Case "/index.html"
+                        embeddedName = "ScanKilat.public.index.html"
+                    Case "/index.js"
+                        embeddedName = "ScanKilat.public.index.js"
+                    Case "/logo.png"
+                        embeddedName = "ScanKilat.public.logo.png"
+                    Case "/vendor/html5-qrcode.min.js"
+                        embeddedName = "ScanKilat.public.vendor.html5-qrcode.min.js"
+                    Case "/vendor/qrcode.min.js"
+                        embeddedName = "ScanKilat.public.vendor.qrcode.min.js"
+                End Select
+
+                Dim contentBytes As Byte() = Nothing
+                Dim servedFrom As String = ""
+                If embeddedName IsNot Nothing Then
+                    contentBytes = ReadEmbeddedFile(embeddedName)
+                    If contentBytes IsNot Nothing Then servedFrom = "resource"
                 End If
 
-                Dim localPath = Path.GetFullPath(Path.Combine(canonicalPublicDir, relPath))
+                ' Fallback dev: izinkan override dari folder public/ di disk,
+                ' tetap dengan guard path-traversal seperti sebelumnya.
+                Dim contentType = "application/octet-stream"
+                Dim diskPath As String = Nothing
+                If contentBytes Is Nothing AndAlso embeddedName IsNot Nothing Then
+                    Dim relPath = decodedUrl.TrimStart("/"c, "\"c).Replace("/", Path.DirectorySeparatorChar).Replace("\", Path.DirectorySeparatorChar)
+                    Dim canonicalPublicDir = Path.GetFullPath(_publicDir)
+                    If Not canonicalPublicDir.EndsWith(Path.DirectorySeparatorChar.ToString()) Then
+                        canonicalPublicDir &= Path.DirectorySeparatorChar
+                    End If
+                    diskPath = Path.GetFullPath(Path.Combine(canonicalPublicDir, relPath))
+                    If Not diskPath.StartsWith(canonicalPublicDir, StringComparison.OrdinalIgnoreCase) Then
+                        diskPath = Nothing
+                    ElseIf File.Exists(diskPath) Then
+                        contentBytes = File.ReadAllBytes(diskPath)
+                        servedFrom = "disk"
+                    End If
+                End If
 
-                ' Cegah Path Traversal: pastikan path absolut berada di dalam _publicDir
-                If Not localPath.StartsWith(canonicalPublicDir, StringComparison.OrdinalIgnoreCase) Then
-                    Dim forbidden = "HTTP/1.1 403 Forbidden" & vbCrLf &
-                                    "Content-Type: text/plain; charset=utf-8" & vbCrLf &
-                                    "Content-Length: 9" & vbCrLf &
-                                    "Connection: close" & vbCrLf &
-                                    "X-Content-Type-Options: nosniff" & vbCrLf & vbCrLf &
-                                    "Forbidden"
-                    Dim forbiddenBytes = Encoding.UTF8.GetBytes(forbidden)
-                    stream.Write(forbiddenBytes, 0, forbiddenBytes.Length)
-                    stream.Flush()
-                ElseIf File.Exists(localPath) Then
-                    Dim contentBytes = File.ReadAllBytes(localPath)
-                    Dim contentType = "application/octet-stream"
-                    If localPath.EndsWith(".html", StringComparison.OrdinalIgnoreCase) Then contentType = "text/html; charset=utf-8"
-                    If localPath.EndsWith(".js", StringComparison.OrdinalIgnoreCase) Then contentType = "application/javascript; charset=utf-8"
-                    If localPath.EndsWith(".css", StringComparison.OrdinalIgnoreCase) Then contentType = "text/css; charset=utf-8"
-                    If localPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase) Then contentType = "application/json"
+                ' Cegah Path Traversal / file tak dikenal: tidak ada resource, tidak ada file
+                If contentBytes Is Nothing Then
+                    If embeddedName Is Nothing Then
+                        Dim forbidden = "HTTP/1.1 403 Forbidden" & vbCrLf &
+                                        "Content-Type: text/plain; charset=utf-8" & vbCrLf &
+                                        "Content-Length: 9" & vbCrLf &
+                                        "Connection: close" & vbCrLf &
+                                        "X-Content-Type-Options: nosniff" & vbCrLf & vbCrLf &
+                                        "Forbidden"
+                        Dim forbiddenBytes = Encoding.UTF8.GetBytes(forbidden)
+                        stream.Write(forbiddenBytes, 0, forbiddenBytes.Length)
+                        stream.Flush()
+                    Else
+                        Dim notFound = "HTTP/1.1 404 Not Found" & vbCrLf &
+                                       "Content-Length: 0" & vbCrLf &
+                                       "Connection: close" & vbCrLf &
+                                       "X-Content-Type-Options: nosniff" & vbCrLf & vbCrLf
+                        Dim notFoundBytes = Encoding.UTF8.GetBytes(notFound)
+                        stream.Write(notFoundBytes, 0, notFoundBytes.Length)
+                        stream.Flush()
+                    End If
+                Else
+                    Dim typeKey = If(diskPath, embeddedName)
+                    If typeKey.EndsWith(".html", StringComparison.OrdinalIgnoreCase) Then contentType = "text/html; charset=utf-8"
+                    If typeKey.EndsWith(".js", StringComparison.OrdinalIgnoreCase) Then contentType = "application/javascript; charset=utf-8"
+                    If typeKey.EndsWith(".css", StringComparison.OrdinalIgnoreCase) Then contentType = "text/css; charset=utf-8"
+                    If typeKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase) Then contentType = "application/json"
+                    If typeKey.EndsWith(".png", StringComparison.OrdinalIgnoreCase) Then contentType = "image/png"
                     ' Secret sesi/joinKey hanya ada di query string, tapi HTML tidak boleh
                     ' dicache agar tidak tersimpan di disk HP/browser. JS/vendor boleh dicache.
                     Dim cacheControl = "Cache-Control: no-store" & vbCrLf
@@ -560,14 +609,6 @@ Public Class ScannerServer
                     Dim headerBytes = Encoding.UTF8.GetBytes(httpHeader)
                     stream.Write(headerBytes, 0, headerBytes.Length)
                     stream.Write(contentBytes, 0, contentBytes.Length)
-                    stream.Flush()
-                Else
-                    Dim notFound = "HTTP/1.1 404 Not Found" & vbCrLf &
-                                   "Content-Length: 0" & vbCrLf &
-                                   "Connection: close" & vbCrLf &
-                                   "X-Content-Type-Options: nosniff" & vbCrLf & vbCrLf
-                    Dim notFoundBytes = Encoding.UTF8.GetBytes(notFound)
-                    stream.Write(notFoundBytes, 0, notFoundBytes.Length)
                     stream.Flush()
                 End If
                 client.Close()
@@ -593,6 +634,25 @@ Public Class ScannerServer
             Interlocked.Decrement(_activeConnections)
         End Try
     End Sub
+
+    Private Shared Function ReadEmbeddedFile(resourceName As String) As Byte()
+        Try
+            Dim asm = Reflection.Assembly.GetExecutingAssembly()
+            Using stream = asm.GetManifestResourceStream(resourceName)
+                If stream Is Nothing Then Return Nothing
+                Dim raw(CInt(stream.Length) - 1) As Byte
+                Dim offset = 0
+                While offset < raw.Length
+                    Dim read = stream.Read(raw, offset, raw.Length - offset)
+                    If read <= 0 Then Exit While
+                    offset += read
+                End While
+                Return raw
+            End Using
+        Catch
+            Return Nothing
+        End Try
+    End Function
 
     Private Function IsAllowedOrigin(origin As String) As Boolean
         Try

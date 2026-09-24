@@ -24,15 +24,29 @@ Namespace My
         <Global.System.Diagnostics.DebuggerStepThroughAttribute()> _
         Public Sub New()
             MyBase.New(Global.Microsoft.VisualBasic.ApplicationServices.AuthenticationMode.Windows)
-            Me.IsSingleInstance = false
+            Global.ScanKilat.EmbeddedLoader.EnsureInitialized()
+            Me.IsSingleInstance = true
             Me.EnableVisualStyles = true
             Me.SaveMySettingsOnExit = true
             Me.ShutDownStyle = Global.Microsoft.VisualBasic.ApplicationServices.ShutdownMode.AfterMainFormCloses
         End Sub
 
         <Global.System.Diagnostics.DebuggerStepThroughAttribute()> _
+        Protected Overrides Sub OnStartupNextInstance(ByVal eventArgs As Microsoft.VisualBasic.ApplicationServices.StartupNextInstanceEventArgs)
+            MyBase.OnStartupNextInstance(eventArgs)
+            Try
+                Dim main = TryCast(Me.MainForm, Global.ScanKilat.Form1)
+                If main IsNot Nothing Then
+                    main.ShowRunningInstanceNotification()
+                End If
+            Catch
+            End Try
+            eventArgs.BringToForeground = True
+        End Sub
+
+        <Global.System.Diagnostics.DebuggerStepThroughAttribute()> _
         Protected Overrides Sub OnCreateMainForm()
-            Me.MainForm = Global.Barcode2Scanner.Form1
+            Me.MainForm = Global.ScanKilat.Form1
         End Sub
     End Class
 End Namespace
